@@ -1,0 +1,4 @@
+"""Exceptions.
+
+Custom project exceptions.
+"""

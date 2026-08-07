@@ -1,0 +1,13 @@
+# Declares WHICH secrets the engine requires and WHERE they are read from.
+# It never contains secret values, and must not be edited to hold any.
+#
+# With secrets_provider 'environment', each name below is read from the
+# prefixed variable of the same name, e.g. LLM_API_KEY -> ODOSIAN_LLM_API_KEY.
+# With secrets_provider 'file', they are read from the untracked YAML file at
+# secrets_file, which maps each name to its value.
+
+security:
+  secrets_provider: environment   # environment | file
+  secrets_file: null              # used only when secrets_provider is 'file'
+  required_secrets:
+    - LLM_API_KEY

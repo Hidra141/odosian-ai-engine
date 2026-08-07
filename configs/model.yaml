@@ -1,0 +1,14 @@
+# Language model parameters.
+#
+# This file holds no credentials. The API key is declared by name in
+# security.yaml and resolved from the environment or a secrets file.
+
+model:
+  provider: gemini
+  name: gemini-3.5-flash
+  temperature: 0.2                # 0.0 - 2.0
+  top_p: 0.95                     # greater than 0.0, at most 1.0
+  max_output_tokens: 4096
+  timeout_seconds: 60
+  max_retries: 3
+  retry_backoff_seconds: 1.0

@@ -1,0 +1,12 @@
+# Logging destination, severity and format.
+#
+# file_path applies only when output is 'file'; max_bytes and backup_count
+# configure rotation of that file.
+
+logging:
+  level: INFO                     # DEBUG | INFO | WARNING | ERROR | CRITICAL
+  format: json                    # json | text
+  output: stdout                  # stdout | stderr | file
+  file_path: logs/engine.log
+  max_bytes: 10485760             # 10 MiB
+  backup_count: 5

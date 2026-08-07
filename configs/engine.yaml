@@ -1,0 +1,16 @@
+# Engine identity, execution limits and asset locations.
+#
+# This file is a template. Override per deployment with engine.local.yaml
+# (untracked) or with ODOSIAN_* environment variables.
+# Paths are relative to the project root unless given as absolute paths.
+
+engine:
+  name: odosian-ai-engine
+  environment: development        # development | staging | production
+  request_timeout_seconds: 60
+  max_concurrent_requests: 4
+
+paths:
+  resources_dir: resources
+  knowledge_dir: resources/knowledge
+  prompts_dir: prompts

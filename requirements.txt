@@ -1,0 +1,8 @@
+# Runtime dependencies of the ODOSIAN AI Engine.
+# pyproject.toml is authoritative; this file mirrors its [project.dependencies].
+# Development dependencies live in pyproject.toml under [project.optional-dependencies].
+
+google-genai>=1.0.0
+jsonschema>=4.23
+python-dotenv>=1.0.1
+pyyaml>=6.0.1
