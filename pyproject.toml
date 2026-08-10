@@ -26,6 +26,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+graph = [
+    "neo4j>=5.24",
+]
 dev = [
     "mypy>=1.11",
     "pytest>=8.3",
