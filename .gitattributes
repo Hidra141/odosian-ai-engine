@@ -1,0 +1,11 @@
+# Raw knowledge base datasets.
+#
+# These five JSONL files are immutable source data whose SHA-256 digests are
+# asserted throughout Stages 11-14 and the retrieval evaluation. They use CRLF
+# line endings, and on a machine with core.autocrlf=true Git would otherwise
+# strip one byte per line on commit, so a clone on Linux or macOS would receive
+# an LF variant whose digests no longer match.
+#
+# `-text` disables all end-of-line conversion for them: Git stores and checks
+# out the bytes verbatim on every platform.
+resources/knowledge/**/*.jsonl -text
