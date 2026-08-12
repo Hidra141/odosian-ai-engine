@@ -18,6 +18,7 @@ from google import genai
 from google.genai import types as genai_types
 
 from src.config.secrets import Secret
+from src.config.types import ThinkingLevel
 
 from .exceptions import (
     LLMAuthenticationError,
@@ -40,6 +41,19 @@ _JSON_MIME_TYPE: Final[str] = "application/json"
 _TEXT_MIME_TYPE: Final[str] = "text/plain"
 _MILLISECONDS_PER_SECOND: Final[int] = 1000
 _MAX_ERROR_DETAIL: Final[int] = 200
+
+_THINKING_LEVELS: Final[dict[ThinkingLevel, genai_types.ThinkingLevel]] = {
+    ThinkingLevel.MINIMAL: genai_types.ThinkingLevel.MINIMAL,
+    ThinkingLevel.LOW: genai_types.ThinkingLevel.LOW,
+    ThinkingLevel.MEDIUM: genai_types.ThinkingLevel.MEDIUM,
+    ThinkingLevel.HIGH: genai_types.ThinkingLevel.HIGH,
+}
+"""The engine's neutral levels mapped onto Gemini's own vocabulary.
+
+Written as a table rather than upper-casing the value, so a level this adapter
+has not been taught fails at the mapping instead of reaching the API as a
+plausible-looking string.
+"""
 
 _AUTH_CODES: Final[frozenset[int]] = frozenset({401, 403})
 _NOT_FOUND_CODES: Final[frozenset[int]] = frozenset({404})
@@ -109,16 +123,36 @@ class GeminiProvider:
             if request.response_format is ResponseFormat.JSON
             else _TEXT_MIME_TYPE
         )
+        schema = request.response_json_schema if mime_type == _JSON_MIME_TYPE else None
         return genai_types.GenerateContentConfig(
             system_instruction=request.system if request.has_system else None,
             temperature=parameters.temperature,
             top_p=parameters.top_p,
             max_output_tokens=parameters.max_output_tokens,
             response_mime_type=mime_type,
+            response_json_schema=dict(schema) if schema is not None else None,
+            thinking_config=_thinking_config(parameters.thinking_level),
             http_options=genai_types.HttpOptions(
                 timeout=parameters.timeout_seconds * _MILLISECONDS_PER_SECOND,
             ),
         )
+
+
+def _thinking_config(level: ThinkingLevel | None) -> Any:
+    """Translate the neutral thinking level into the SDK's own configuration.
+
+    ``None`` yields no configuration at all, leaving the provider's default
+    behaviour untouched — which is what every call did before this setting
+    existed.
+
+    Only ``thinking_level`` is ever set. The SDK also accepts a
+    ``thinking_budget`` expressed in tokens, and will serialise both together
+    without complaint, but the two are alternative ways of saying the same
+    thing and sending both leaves the model to decide which one it honours.
+    """
+    if level is None:
+        return None
+    return genai_types.ThinkingConfig(thinking_level=_THINKING_LEVELS[level])
 
 
 def _build_response(raw: Any, request: LLMRequest, duration: float) -> LLMResponse:
@@ -169,6 +203,7 @@ def _extract_usage(raw: Any) -> TokenUsage:
         prompt_tokens=_as_int(getattr(metadata, "prompt_token_count", 0)),
         completion_tokens=_as_int(getattr(metadata, "candidates_token_count", 0)),
         total_tokens=_as_int(getattr(metadata, "total_token_count", 0)),
+        thoughts_tokens=_as_int(getattr(metadata, "thoughts_token_count", 0)),
     )
 
 

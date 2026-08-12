@@ -8,7 +8,16 @@ model:
   name: gemini-3.5-flash
   temperature: 0.2                # 0.0 - 2.0
   top_p: 0.95                     # greater than 0.0, at most 1.0
-  max_output_tokens: 4096
+  # Covers the model's reasoning tokens as well as its answer. A live
+  # gemini-3.5-flash analyze call spent 4432 tokens thinking and 911 answering,
+  # so 4096 left nothing to answer with and the reply failed to parse.
+  max_output_tokens: 8192
+  # How much internal reasoning the model may spend before answering:
+  # minimal | low | medium | high. Reasoning is paid for out of
+  # max_output_tokens, so an unbounded level can consume the whole allowance
+  # and truncate the reply. A measured call at the provider's default spent
+  # 7250 tokens thinking and was cut off; at 'minimal' it spent none.
+  thinking_level: minimal
   timeout_seconds: 60
   max_retries: 3
   retry_backoff_seconds: 1.0

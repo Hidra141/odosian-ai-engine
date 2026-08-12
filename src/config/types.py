@@ -52,3 +52,24 @@ class SecretsProvider(StrEnum):
 
     ENVIRONMENT = "environment"
     FILE = "file"
+
+
+class ThinkingLevel(StrEnum):
+    """How much internal reasoning a model may spend before answering.
+
+    Provider-neutral, and deliberately a coarse scale rather than a token count:
+    a budget expressed in tokens means something different to every backend,
+    while "as little as possible" and "as much as needed" travel.
+
+    The setting exists because on reasoning models the internal reasoning is
+    paid for out of the same output allowance as the answer. Left unbounded it
+    can consume the whole allowance and truncate the reply, which is exactly
+    what a measured Gemini call did before this setting existed.
+
+    Leaving it unset means the provider's own default applies.
+    """
+
+    MINIMAL = "minimal"
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"

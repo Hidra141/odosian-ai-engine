@@ -28,7 +28,7 @@ from .provider import LLMProvider
 from .request import LLMRequest
 from .response import LLMResponse
 from .retry import RetryExecutor, RetryPolicy
-from .types import ResponseFormat
+from .types import JSONSchema, ResponseFormat
 
 
 @final
@@ -63,12 +63,20 @@ class LLMClient:
         prompt: RenderedPrompt,
         *,
         response_format: ResponseFormat = ResponseFormat.JSON,
+        response_json_schema: JSONSchema | None = None,
     ) -> LLMResponse:
-        """Execute a rendered prompt and return the provider's response."""
+        """Execute a rendered prompt and return the provider's response.
+
+        A schema, where given, states the shape the caller requires and is
+        passed to the provider unchanged. This layer neither authors it nor
+        checks the response against it: what a well-formed result looks like
+        remains the caller's question.
+        """
         request = LLMRequest.from_rendered_prompt(
             prompt,
             self.settings,
             response_format=response_format,
+            response_json_schema=response_json_schema,
         )
         return self.execute_request(request)
 
@@ -86,7 +94,8 @@ class LLMClient:
         usage = response.usage
         self.logger.info(
             "llm call completed operation=%s provider=%s model=%s duration=%.3fs "
-            "finish_reason=%s prompt_tokens=%d completion_tokens=%d total_tokens=%d",
+            "finish_reason=%s prompt_tokens=%d completion_tokens=%d thoughts_tokens=%d "
+            "total_tokens=%d",
             request.operation,
             response.provider,
             response.model,
@@ -94,6 +103,7 @@ class LLMClient:
             response.finish_reason.value,
             usage.prompt_tokens,
             usage.completion_tokens,
+            usage.thoughts_tokens,
             usage.total_tokens,
         )
 

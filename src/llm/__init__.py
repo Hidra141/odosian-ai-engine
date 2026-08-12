@@ -38,7 +38,14 @@ from .provider import LLMProvider
 from .request import GenerationParameters, LLMRequest
 from .response import LLMResponse, TokenUsage
 from .retry import RetryExecutor, RetryObserver, RetryPolicy
-from .types import FinishReason, JSONObject, JSONValue, ProviderMetadata, ResponseFormat
+from .types import (
+    FinishReason,
+    JSONObject,
+    JSONSchema,
+    JSONValue,
+    ProviderMetadata,
+    ResponseFormat,
+)
 
 __all__ = [
     "PROVIDER_NAME",
@@ -46,6 +53,7 @@ __all__ = [
     "GeminiProvider",
     "GenerationParameters",
     "JSONObject",
+    "JSONSchema",
     "JSONValue",
     "LLMAuthenticationError",
     "LLMClient",
