@@ -25,6 +25,7 @@ from src.core.models import (
     GenerateResult,
     OperationResult,
 )
+from src.core.types import SupportLevel
 from src.core.uncertainty import UncertainIdentifier, uncertain_identifiers
 
 
@@ -96,6 +97,27 @@ def citations(result: OperationResult) -> Iterator[tuple[str, Evidence]]:
         for index, mapping in enumerate(result.mappings):
             for position, citation in enumerate(mapping.evidence):
                 yield f"mappings[{index}].evidence[{position}]", citation
+
+
+def claimed_identifiers(result: OperationResult) -> Iterator[tuple[str, str, SupportLevel]]:
+    """Yield every identifier a result claims outside a citation, with path and support.
+
+    A generated rule's ATT&CK mapping states its tactic and technique on the
+    claim itself, not on the citations hanging off it, so :func:`citations`
+    never reaches them and a check reading only citations would let an invented
+    mapping through. Empty values are skipped: a mapping that states no tactic
+    claims nothing, and there is nothing to look for in the supplied material.
+    """
+    if not isinstance(result, GenerateResult):
+        return
+    for index, mapping in enumerate(result.mappings):
+        for name, identifier in (
+            ("tactic_id", mapping.tactic_id),
+            ("technique_id", mapping.technique_id),
+        ):
+            value = identifier.strip()
+            if value:
+                yield f"mappings[{index}].{name}", value, mapping.support
 
 
 def texts(result: OperationResult) -> Iterator[tuple[str, str]]:

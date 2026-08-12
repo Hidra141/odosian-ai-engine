@@ -341,6 +341,120 @@ def test_an_off_band_risk_score_warns_without_blocking():
     assert report.warnings and report.is_valid
 
 
+# mapping claims — the identifiers a generated rule asserts outside a citation
+
+
+def test_a_mapping_claiming_supplied_identifiers_is_accepted():
+    """A — both ids occur in the supplied material, so nothing is fabricated."""
+    result, package = result_for(ReasoningOperation.GENERATE)
+    mapped = _remap(
+        result,
+        tactic_id="TA0011",
+        technique_id="T1059.001",
+        support=SupportLevel.UNSUPPORTED,
+    )
+    report = ENGINE.validate(mapped, package)
+    assert report.is_valid
+    assert ValidationCode.FABRICATED_IDENTIFIER not in codes(report)
+
+
+def test_a_fabricated_mapping_technique_id_is_rejected():
+    """B — the technique the material never carried."""
+    result, package = result_for(ReasoningOperation.GENERATE)
+    with pytest.raises(EvidenceValidationError) as error:
+        ENGINE.validate_or_raise(_remap(result, technique_id="T9999"), package)
+    report = error.value.report
+    assert ValidationCode.FABRICATED_IDENTIFIER in report.codes()
+    assert [issue.path for issue in report.errors] == ["mappings[0].technique_id"]
+    assert "T9999" in error.value.issues[0]
+
+
+def test_a_fabricated_mapping_tactic_id_is_rejected():
+    """C — the tactic the material never carried, which the live model invented."""
+    result, package = result_for(ReasoningOperation.GENERATE)
+    with pytest.raises(EvidenceValidationError) as error:
+        ENGINE.validate_or_raise(_remap(result, tactic_id="TA9999"), package)
+    report = error.value.report
+    assert ValidationCode.FABRICATED_IDENTIFIER in report.codes()
+    assert [issue.path for issue in report.errors] == ["mappings[0].tactic_id"]
+    assert "TA9999" in error.value.issues[0]
+
+
+def test_a_mapping_fabricating_both_identifiers_reports_both():
+    """D — neither id is supplied, and neither is allowed to pass unremarked."""
+    result, package = result_for(ReasoningOperation.GENERATE)
+    report = ENGINE.validate(
+        _remap(result, tactic_id="TA9999", technique_id="T9999"), package
+    )
+    assert not report.is_valid
+    assert [issue.path for issue in report.errors] == [
+        "mappings[0].tactic_id",
+        "mappings[0].technique_id",
+    ]
+    assert set(report.codes()) == {ValidationCode.FABRICATED_IDENTIFIER}
+
+
+def test_a_mapping_stating_no_tactic_claims_nothing():
+    """An empty id asserts nothing about the material, so nothing is checked."""
+    result, package = result_for(ReasoningOperation.GENERATE)
+    assert result.mappings[0].tactic_id == ""
+    report = ENGINE.validate(result, package)
+    assert report.is_valid
+
+
+@pytest.mark.parametrize("identifier", ["T1562", "TA0011", "M1013"])
+def test_a_mapping_may_not_present_an_unsettled_identifier_as_fact(identifier):
+    """E — the uncertainty rules hold for a mapping claim as for any other."""
+    result, package = result_for(ReasoningOperation.GENERATE)
+    mapped = _remap(result, tactic_id=identifier, support=SupportLevel.SUPPORTED)
+    report = ENGINE.validate(mapped, package)
+    assert ValidationCode.UNCERTAINTY_PRESENTED_AS_FACT in codes(report)
+    assert not report.is_valid
+    assert [
+        issue.path for issue in report.of_category(ValidationCategory.UNCERTAINTY)
+    ] == ["mappings[0].tactic_id"]
+    assert ValidationCode.FABRICATED_IDENTIFIER not in codes(report)
+
+
+@pytest.mark.parametrize("identifier", ["T1562", "TA0011", "M1013"])
+def test_a_mapping_may_rest_on_an_unsettled_identifier_without_claiming_support(identifier):
+    """E — carrying an unsettled id is allowed; asserting it as established is not."""
+    result, package = result_for(ReasoningOperation.GENERATE)
+    mapped = _remap(result, tactic_id=identifier, support=SupportLevel.PARTIALLY_SUPPORTED)
+    report = ENGINE.validate(mapped, package)
+    assert report.is_valid
+
+
+def test_citations_attached_to_a_mapping_are_still_validated():
+    """F — widening the walk must not displace the citation checks it already ran."""
+    result, package = result_for(ReasoningOperation.GENERATE)
+    mapping = result.mappings[0]
+    citation = dataclasses.replace(mapping.evidence[0], item_id="ctx-never-supplied")
+    mapped = dataclasses.replace(
+        result,
+        mappings=(
+            dataclasses.replace(mapping, evidence=(citation, *mapping.evidence[1:])),
+            *result.mappings[1:],
+        ),
+    )
+    report = ENGINE.validate(mapped, package)
+    assert ValidationCode.UNKNOWN_ITEM in codes(report)
+    assert any(issue.path == "mappings[0].evidence[0].item_id" for issue in report.errors)
+
+
+def test_mapping_validation_is_deterministic():
+    """G — the same faulty mapping produces the same report, in the same order."""
+    result, package = result_for(ReasoningOperation.GENERATE)
+    broken = _remap(
+        result, tactic_id="TA9999", technique_id="T9999", support=SupportLevel.SUPPORTED
+    )
+    first = ENGINE.validate(broken, package)
+    second = ENGINE.validate(broken, package)
+    assert first == second
+    assert first.issues == second.issues
+    assert [i.sort_key for i in first.issues] == sorted(i.sort_key for i in first.issues)
+
+
 # 17-18 — security
 
 
@@ -489,6 +603,23 @@ def test_severity_decides_whether_a_report_blocks():
     assert report.is_valid
     assert ENGINE.validate_or_raise(warned, package) is warned
     assert all(i.severity is IssueSeverity.WARNING for i in report.issues)
+
+
+def _remap(result, *, tactic_id=None, technique_id=None, support=None):
+    """Return the generate result with its first ATT&CK mapping claim altered.
+
+    Built by replacement for the reason given on :func:`_recite`: Stage-15
+    refuses a fabricated mapping at the parse boundary, and the point of these
+    cases is a result that never passed through it.
+    """
+    mapping = result.mappings[0]
+    if tactic_id is not None:
+        mapping = dataclasses.replace(mapping, tactic_id=tactic_id)
+    if technique_id is not None:
+        mapping = dataclasses.replace(mapping, technique_id=technique_id)
+    if support is not None:
+        mapping = dataclasses.replace(mapping, support=support)
+    return dataclasses.replace(result, mappings=(mapping, *result.mappings[1:]))
 
 
 def _recite(result, *, item_id=None, identifier=None, support=None):

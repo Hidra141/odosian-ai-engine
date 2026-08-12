@@ -61,7 +61,7 @@ from .exceptions import (
     error_for,
 )
 from .models import ValidationIssue, ValidationReport
-from .supplied import SuppliedContext, citations, texts
+from .supplied import SuppliedContext, citations, claimed_identifiers, texts
 from .types import (
     CategoryOrder,
     IssueSeverity,
@@ -92,6 +92,7 @@ __all__ = [
     "ValidationIssue",
     "ValidationReport",
     "citations",
+    "claimed_identifiers",
     "error_for",
     "issue_codes",
     "texts",

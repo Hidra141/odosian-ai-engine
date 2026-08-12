@@ -47,7 +47,7 @@ from src.core.types import (
 from src.prompts.placeholders import find_placeholders
 
 from .models import ValidationIssue
-from .supplied import SuppliedContext, citations, texts
+from .supplied import SuppliedContext, citations, claimed_identifiers, texts
 from .types import IssueSeverity, ValidationCode
 
 _WHITESPACE: Final[re.Pattern[str]] = re.compile(r"\s+")
@@ -317,7 +317,27 @@ class EvidenceChecker:
                     f"{path}.identifier",
                     f"{identifier!r} does not occur in the supplied material",
                 )
+        yield from self._claimed(result, supplied)
         yield from self._supported_claims(result)
+
+    def _claimed(
+        self,
+        result: OperationResult,
+        supplied: SuppliedContext,
+    ) -> Iterator[ValidationIssue]:
+        """Yield an issue for an identifier claimed outside a citation and never supplied.
+
+        A generated rule's ATT&CK mapping states its own tactic and technique.
+        Those are claims like any other and are held to the same rule: an
+        identifier the material never carried cannot be asserted about it.
+        """
+        for path, identifier, _ in claimed_identifiers(result):
+            if not supplied.supplies(identifier):
+                yield _issue(
+                    ValidationCode.FABRICATED_IDENTIFIER,
+                    path,
+                    f"{identifier!r} does not occur in the supplied material",
+                )
 
     def _supported_claims(self, result: OperationResult) -> Iterator[ValidationIssue]:
         """Yield an issue for a claim that declares support but cites nothing."""
@@ -419,6 +439,15 @@ class UncertaintyChecker:
                 continue
             support = _support_of(result, path)
             if support is SupportLevel.SUPPORTED:
+                yield _issue(
+                    ValidationCode.UNCERTAINTY_PRESENTED_AS_FACT,
+                    path,
+                    f"the claim rests on {identifier}, which the supplied context reports as "
+                    f"{entry.status.value}, yet declares support 'supported'",
+                )
+        for path, identifier, support in claimed_identifiers(result):
+            entry = supplied.ledger.get(identifier)
+            if entry is not None and support is SupportLevel.SUPPORTED:
                 yield _issue(
                     ValidationCode.UNCERTAINTY_PRESENTED_AS_FACT,
                     path,

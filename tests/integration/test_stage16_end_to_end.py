@@ -25,6 +25,7 @@ from src.entities.extractor import EntityExtractor
 from src.mapping.entity_mapper import EntityMapper
 from src.parser.parser import RuleParser
 from src.validation import (
+    EvidenceValidationError,
     RuleIntegrityValidationError,
     UncertaintyValidationError,
     ValidationCode,
@@ -154,6 +155,30 @@ def test_the_live_ta0002_fabrication_is_refused():
         )
     assert error.value.report.codes()[0] is ValidationCode.FABRICATED_MAPPING
     assert "TA0002" in error.value.issues[0]
+
+
+def test_a_fabricated_mapping_claim_is_refused_end_to_end():
+    """The same invention on a generated rule's mapping claim, over the real pipeline.
+
+    ``mappings`` states its own tactic and technique beside the citations it
+    carries, so a check reading only citations would never see them.
+    """
+    result, package = pipeline(ContextOperation.GENERATE)
+    assert "TA0002" not in "\n".join(item.text for item in package.items)
+    fabricated = dataclasses.replace(
+        result.mappings[0], tactic_id="TA0002", technique_id="T9999"
+    )
+    with pytest.raises(EvidenceValidationError) as error:
+        ENGINE.validate_or_raise(
+            dataclasses.replace(result, mappings=(fabricated, *result.mappings[1:])),
+            package,
+        )
+    report = error.value.report
+    assert set(report.codes()) == {ValidationCode.FABRICATED_IDENTIFIER}
+    assert [issue.path for issue in report.errors] == [
+        "mappings[0].tactic_id",
+        "mappings[0].technique_id",
+    ]
 
 
 # determinism and immutability
