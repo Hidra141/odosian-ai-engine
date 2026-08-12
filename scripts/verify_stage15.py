@@ -87,13 +87,20 @@ Stage-15 — which they must not.
 """
 
 RANKING_BASELINE: Final[dict[str, str]] = {
-    "src/graphrag/ranking.py": "c28f4043e0ce18ccc8db59b2ae76619d9bf99ced1c9d024ea38772c00c3ab6c1",
-    "src/graphrag/config.py": "21de69c7e3641d3db9ad5a37fb1588c762ad69d996554e89c4babda03b1401bd",
+    "src/graphrag/ranking.py": "71f2548147d0036962bfc3a3aa453a63df1beb0aca86267301f04bdfcecce7f9",
+    "src/graphrag/config.py": "af6acda42fee2c833e0fecf899a31f57dd514b4fdf99e3db11f46cd68f49b21b",
 }
-"""Stage-13's ranking weights and retrieval configuration, which Stage-15 must not touch."""
+"""Stage-13's ranking weights and retrieval configuration, which later stages must not touch.
+
+Hashes of the *committed* content, read with ``git show HEAD:<path>``, not of the
+bytes on disk. Git normalises line endings on checkout, so a worktree hash says
+as much about the platform that checked the file out as about the file — the
+same commit produced two different digests on two worktrees of this repository,
+and the check failed on both when only one could be wrong."""
 
 STAGE_15_PATHS: Final[tuple[str, ...]] = (
     "src/core/",
+    "src/validation/",
     "tests/",
     "scripts/",
     "docs/",
@@ -507,11 +514,10 @@ def _regression(harness: Harness) -> None:
     """Check that Stage-15 changed nothing it was not allowed to change."""
     harness.section("10. Regression")
     for relative, expected in CORPUS_BASELINE.items():
-        path = ROOT / relative
-        if not path.is_file():
-            harness.check(f"corpus present: {relative}", False, "file is missing")
+        data = _committed(relative)
+        if data is None:
+            harness.check(f"corpus present: {relative}", False, "file is not committed")
             continue
-        data = path.read_bytes()
         digest = hashlib.sha256(data).hexdigest()
         records = sum(1 for line in data.split(b"\n") if line.strip())
         harness.check(f"corpus sha256 unchanged: {relative}", digest == expected["sha256"], digest)
@@ -521,7 +527,8 @@ def _regression(harness: Harness) -> None:
             f"{records} records",
         )
     for relative, digest in RANKING_BASELINE.items():
-        actual = hashlib.sha256((ROOT / relative).read_bytes()).hexdigest()
+        data = _committed(relative)
+        actual = hashlib.sha256(data).hexdigest() if data is not None else "not committed"
         harness.check(f"stage-13 ranking unchanged: {relative}", actual == digest, actual)
 
     changed = _changed_files()
@@ -532,6 +539,25 @@ def _regression(harness: Harness) -> None:
         not outside,
         ", ".join(outside) if outside else "",
     )
+
+
+def _committed(relative: str) -> bytes | None:
+    """Return one file's committed content, or ``None`` when git cannot supply it.
+
+    Reads ``git show HEAD:<path>`` rather than the working copy, so the digest
+    describes what is under version control instead of what this platform's
+    checkout happens to look like.
+    """
+    try:
+        completed = subprocess.run(  # noqa: S603 - fixed argument vector
+            ["git", "show", f"HEAD:{relative}"],  # noqa: S607 - git resolved from PATH
+            cwd=ROOT,
+            capture_output=True,
+            check=False,
+        )
+    except OSError:
+        return None
+    return completed.stdout if completed.returncode == 0 else None
 
 
 def _changed_files() -> tuple[str, ...]:
