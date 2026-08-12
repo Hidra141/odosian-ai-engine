@@ -18,6 +18,7 @@ from .coercion import (
     as_enum,
     as_float,
     as_int,
+    as_optional_enum,
     as_optional_path,
     as_path,
     as_str,
@@ -69,6 +70,7 @@ from .types import (
     LogOutput,
     MutableConfigMapping,
     SecretsProvider,
+    ThinkingLevel,
 )
 from .validators import (
     ValidationIssue,
@@ -117,6 +119,7 @@ __all__ = [
     "Secret",
     "SecretsLoader",
     "SecretsProvider",
+    "ThinkingLevel",
     "SecuritySettings",
     "ValidationIssue",
     "ValidationResult",
@@ -124,6 +127,7 @@ __all__ = [
     "as_enum",
     "as_float",
     "as_int",
+    "as_optional_enum",
     "as_optional_path",
     "as_path",
     "as_str",

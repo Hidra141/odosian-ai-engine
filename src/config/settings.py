@@ -14,6 +14,7 @@ from .coercion import (
     as_enum,
     as_float,
     as_int,
+    as_optional_enum,
     as_optional_path,
     as_path,
     as_str,
@@ -27,6 +28,7 @@ from .types import (
     LogLevel,
     LogOutput,
     SecretsProvider,
+    ThinkingLevel,
 )
 
 
@@ -77,7 +79,13 @@ class PathSettings:
 
 @dataclass(frozen=True, slots=True)
 class ModelSettings:
-    """Parameters describing which language model to call and how."""
+    """Parameters describing which language model to call and how.
+
+    ``thinking_level`` is optional and provider-neutral. Unset means the
+    provider's own default reasoning behaviour applies; a value asks the
+    provider to hold reasoning to that level. It carries no token count,
+    because a token budget means something different to every backend.
+    """
 
     provider: str
     name: str
@@ -87,6 +95,7 @@ class ModelSettings:
     timeout_seconds: int
     max_retries: int
     retry_backoff_seconds: float
+    thinking_level: ThinkingLevel | None = None
 
     @classmethod
     def from_mapping(cls, data: ConfigMapping) -> ModelSettings:
@@ -101,6 +110,7 @@ class ModelSettings:
             timeout_seconds=as_int(section, "timeout_seconds", default=60),
             max_retries=as_int(section, "max_retries", default=3),
             retry_backoff_seconds=as_float(section, "retry_backoff_seconds", default=1.0),
+            thinking_level=as_optional_enum(section, "thinking_level", ThinkingLevel),
         )
 
 

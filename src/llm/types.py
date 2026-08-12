@@ -14,6 +14,15 @@ type JSONValue = str | int | float | bool | None | Sequence[JSONValue] | Mapping
 type JSONObject = Mapping[str, JSONValue]
 type ProviderMetadata = Mapping[str, str]
 
+type JSONSchema = Mapping[str, JSONValue]
+"""A JSON Schema document, as plain JSON.
+
+Deliberately a mapping rather than a provider's schema class. A caller states
+the shape it expects in the vendor-neutral language of JSON Schema, and each
+adapter translates that into whatever its own SDK wants. Nothing outside an
+adapter ever holds a provider's schema type.
+"""
+
 
 class FinishReason(StrEnum):
     """Why the provider stopped generating."""

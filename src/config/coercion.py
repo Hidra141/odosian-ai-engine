@@ -167,6 +167,23 @@ def as_enum(
     raise InvalidConfigValueError(key, value, f"one of {_choices(enum_type)}")
 
 
+def as_optional_enum(
+    data: ConfigMapping,
+    key: str,
+    enum_type: type[_EnumT],
+) -> _EnumT | None:
+    """Return an enum member, or ``None`` when the key is unset or null.
+
+    Distinct from :func:`as_enum` with a default: an absent value means "leave
+    it to whoever consumes this", not "use this member". A *present* value is
+    held to the same standard, so a misspelling is still rejected rather than
+    silently becoming ``None``.
+    """
+    if data.get(key) is None:
+        return None
+    return as_enum(data, key, enum_type)
+
+
 def _choices(enum_type: type[StrEnum]) -> str:
     """Return the accepted values of an enum, formatted for an error message."""
     return ", ".join(member.value for member in enum_type)
