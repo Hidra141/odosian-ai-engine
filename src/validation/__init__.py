@@ -61,7 +61,16 @@ from .exceptions import (
     error_for,
 )
 from .models import ValidationIssue, ValidationReport
-from .supplied import SuppliedContext, citations, claimed_identifiers, texts
+from .supplied import (
+    SuppliedContext,
+    attack_mappings,
+    citations,
+    claimed_identifiers,
+    fold,
+    mapping_claims,
+    produced_rules,
+    texts,
+)
 from .types import (
     CategoryOrder,
     IssueSeverity,
@@ -91,10 +100,14 @@ __all__ = [
     "ValidationEngineError",
     "ValidationIssue",
     "ValidationReport",
+    "attack_mappings",
     "citations",
     "claimed_identifiers",
     "error_for",
+    "fold",
     "issue_codes",
+    "mapping_claims",
+    "produced_rules",
     "texts",
     "validate",
 ]

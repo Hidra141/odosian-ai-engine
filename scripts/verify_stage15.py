@@ -114,6 +114,23 @@ directory. It carries a single Stage-15 change, made after a live call showed
 the previous output budget could not hold a reply: see the comment on
 ``max_output_tokens`` there. Every other configuration file stays guarded."""
 
+UNTRACKED_BASELINE: Final[tuple[str, ...]] = (
+    ".claude/",
+    "evaluation/",
+)
+"""Developer-local paths that were already untracked before this stage began.
+
+Recorded the way the corpus and ranking baselines are recorded: as an explicit
+list, so what is tolerated is stated rather than inferred. These are the working
+directory of the coding agent and the retrieval evaluation's own output — no
+part of the engine reads either, and neither is under version control.
+
+The allowance is deliberately narrow. It applies only to paths git reports as
+untracked: were either to become tracked and then modified, it would be a change
+to a frozen file and would fail here as any other would. Everything else
+untracked — a stray source file, a dataset, a new directory — still fails, which
+is the point of the check."""
+
 AUTHORISED_PROVIDER_PATHS: Final[tuple[str, ...]] = (
     "src/config/__init__.py",
     "src/config/coercion.py",
@@ -533,12 +550,27 @@ def _regression(harness: Harness) -> None:
 
     changed = _changed_files()
     allowed = (*STAGE_15_PATHS, *AUTHORISED_PROVIDER_PATHS)
-    outside = [path for path in changed if not any(path.startswith(item) for item in allowed)]
+    outside = [
+        path
+        for status, path in changed
+        if not path.startswith(allowed) and not _is_baseline_untracked(status, path)
+    ]
     harness.check(
         "no frozen stage was modified",
         not outside,
         ", ".join(outside) if outside else "",
     )
+
+
+def _is_baseline_untracked(status: str, path: str) -> bool:
+    """Return whether git reports a path that was already untracked before this stage.
+
+    Both halves are required. A path only escapes the check when git says it has
+    never been tracked *and* it is one of the recorded baseline paths, so an
+    unexpected untracked file still fails and a tracked file that someone edited
+    still fails wherever it sits.
+    """
+    return status == "??" and path.startswith(UNTRACKED_BASELINE)
 
 
 def _committed(relative: str) -> bytes | None:
@@ -560,8 +592,13 @@ def _committed(relative: str) -> bytes | None:
     return completed.stdout if completed.returncode == 0 else None
 
 
-def _changed_files() -> tuple[str, ...]:
-    """Return the tracked files this working tree changed, as git reports them."""
+def _changed_files() -> tuple[tuple[str, str], ...]:
+    """Return what this working tree changed, each path with the status git gave it.
+
+    The status is kept rather than stripped. Without it a path git has never
+    tracked is indistinguishable from a frozen file someone edited, and the two
+    deserve opposite answers.
+    """
     try:
         completed = subprocess.run(  # noqa: S603 - fixed argument vector
             ["git", "status", "--porcelain"],  # noqa: S607 - git resolved from PATH
@@ -572,11 +609,11 @@ def _changed_files() -> tuple[str, ...]:
         )
     except OSError:
         return ()
-    paths: list[str] = []
+    entries: list[tuple[str, str]] = []
     for line in completed.stdout.splitlines():
         if len(line) > 3:
-            paths.append(line[3:].strip().strip('"'))
-    return tuple(sorted(paths))
+            entries.append((line[:2].strip(), line[3:].strip().strip('"')))
+    return tuple(sorted(entries, key=lambda entry: entry[1]))
 
 
 def _module_imports(relative: str) -> str:

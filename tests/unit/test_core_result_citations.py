@@ -125,6 +125,7 @@ def test_a_result_citing_nothing_returns_no_ids(operation, context_operation, re
         payload["changes"][0]["evidence"] = []
     if "rationale" in payload:
         payload["rationale"][0]["evidence"] = []
+    if "mappings" in payload:
         payload["mappings"] = []
     result = run(operation, payload, package)
     assert result.cited_item_ids() == ()
@@ -147,6 +148,7 @@ def test_a_result_with_no_findings_at_all_returns_no_ids(
         payload["changes"][0]["evidence"] = []
     if "rationale" in payload:
         payload["rationale"][0]["evidence"] = []
+    if "mappings" in payload:
         payload["mappings"] = []
     result = run(operation, payload, package)
     assert result.findings == ()

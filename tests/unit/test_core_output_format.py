@@ -105,7 +105,10 @@ def test_generate_carries_the_rule_its_rationale_and_its_mappings():
     assert {"generated_rule", "rationale", "mappings"} <= set(names)
     assert nested(GENERATE_SPEC, "mappings").field_names() == (
         "tactic_id",
+        "tactic_name",
         "technique_id",
+        "technique_name",
+        "confidence",
         "support",
         "evidence",
     )
