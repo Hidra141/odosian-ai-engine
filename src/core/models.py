@@ -32,6 +32,7 @@ from .exceptions import InvalidReasoningRequestError
 from .types import (
     ChangeCategory,
     EvidenceSource,
+    FalsePositiveRisk,
     FindingCategory,
     ImportanceLevel,
     OutputLanguage,
@@ -192,14 +193,25 @@ class Recommendation:
     rationale: str
     addresses: tuple[str, ...]
     support: SupportLevel
+    code_snippet: str = ""
 
 
 @dataclass(frozen=True, slots=True)
 class MitreMapping:
-    """One ATT&CK mapping a produced rule declares."""
+    """One ATT&CK mapping a produced rule declares.
+
+    The names sit beside the identifiers rather than being resolved later. They
+    are copied from the supplied material, which is what makes an invented name
+    detectable in the same way an invented identifier is — by not occurring in
+    what was supplied. An empty name means the material carried the identifier
+    without naming it: a real answer, not a gap to fill.
+    """
 
     tactic_id: str
     technique_id: str
+    tactic_name: str = ""
+    technique_name: str = ""
+    confidence: float = 0.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -217,6 +229,7 @@ class DetectionRuleDraft:
     false_positives: tuple[str, ...]
     investigation_guide: str
     mitre: tuple[MitreMapping, ...]
+    tags: tuple[str, ...] = ()
 
     @property
     def parser_language(self) -> RuleLanguage:
@@ -260,12 +273,20 @@ class RationaleEntry:
 
 @dataclass(frozen=True, slots=True)
 class MappingClaim:
-    """One ATT&CK mapping claimed for a generated rule."""
+    """One ATT&CK mapping claimed for a rule, with the material establishing it.
+
+    Carried by an analysis as well as by a generation: an assessment states what
+    the rule maps to, and states it with the same evidence and the same degree
+    of support as any other claim.
+    """
 
     tactic_id: str
     technique_id: str
     support: SupportLevel
     evidence: tuple[Evidence, ...]
+    tactic_name: str = ""
+    technique_name: str = ""
+    confidence: float = 0.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -339,7 +360,30 @@ class ReasoningResult:
 
 @dataclass(frozen=True, slots=True)
 class AnalyzeResult(ReasoningResult):
-    """The assessment of an existing rule."""
+    """The assessment of an existing rule.
+
+    ``score`` and ``confidence`` answer different questions and are never
+    interchangeable: the score judges the rule, while the inherited confidence
+    reports how well the supplied context supported the judging. A thin context
+    lowers confidence without flattering the rule.
+    """
+
+    score: int = 0
+    fp_risk: FalsePositiveRisk = FalsePositiveRisk.MEDIUM
+    strengths: tuple[str, ...] = ()
+    evasion_risks: tuple[str, ...] = ()
+    mappings: tuple[MappingClaim, ...] = ()
+
+    def _citations(self) -> tuple[Evidence, ...]:
+        """Return the citations of the findings and of every mapping claimed.
+
+        The base method is called explicitly, for the reason given on
+        :meth:`EnhanceResult._citations`.
+        """
+        return (
+            *ReasoningResult._citations(self),
+            *(item for mapping in self.mappings for item in mapping.evidence),
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -371,6 +415,7 @@ class GenerateResult(ReasoningResult):
     generated_rule: DetectionRuleDraft
     rationale: tuple[RationaleEntry, ...]
     mappings: tuple[MappingClaim, ...]
+    score: int = 0
 
     def _citations(self) -> tuple[Evidence, ...]:
         """Return the citations of the findings, the rationale and the mappings.

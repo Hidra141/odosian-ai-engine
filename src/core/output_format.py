@@ -44,6 +44,7 @@ from .schema import (
 from .types import (
     ChangeCategory,
     EvidenceSource,
+    FalsePositiveRisk,
     FindingCategory,
     ImportanceLevel,
     OutputLanguage,
@@ -69,7 +70,7 @@ EVIDENCE_SPEC: Final[ObjectSpec] = ObjectSpec(
             kind=FieldKind.STRING,
             description=(
                 "The id of the context item supporting the claim, copied exactly from the "
-                "supplied material, for example 'retrieval:0003'."
+                "supplied material, in the form '<CONTEXT_ITEM_ID>'."
             ),
         ),
         FieldSpec(
@@ -82,9 +83,10 @@ EVIDENCE_SPEC: Final[ObjectSpec] = ObjectSpec(
             name="identifier",
             kind=FieldKind.STRING,
             description=(
-                "The identifier the item establishes, reproduced exactly as supplied, for "
-                "example 'T1059.001' or 'process.command_line'. Empty string when the item "
-                "carries none."
+                "The identifier the item establishes, reproduced exactly as supplied — an "
+                "ATT&CK identifier such as '<TECHNIQUE_ID>' or an ECS field such as "
+                "'<ECS_FIELD>'. Empty string when the item carries none. Never write an "
+                "identifier that does not occur in the supplied material."
             ),
             allow_empty=True,
         ),
@@ -237,32 +239,82 @@ RECOMMENDATION_SPEC: Final[ObjectSpec] = ObjectSpec(
             description="How well the supplied context supports the change.",
             enum=_values(SupportLevel),
         ),
+        FieldSpec(
+            name="code_snippet",
+            kind=FieldKind.STRING,
+            description=(
+                "The query fragment that applies this recommendation, on a single line. It "
+                "may reference only fields and values the supplied material confirms, and may "
+                "introduce no identifier the supplied material does not carry. Empty string "
+                "where the change cannot be expressed as a fragment."
+            ),
+            allow_empty=True,
+        ),
     ),
 )
+
+_MITRE_NAME_FIELDS: Final[tuple[FieldSpec, ...]] = (
+    FieldSpec(
+        name="tactic_id",
+        kind=FieldKind.STRING,
+        description=(
+            "The tactic identifier in official form, written as '<TACTIC_ID>'. Use only "
+            "identifiers present in the supplied MITRE material. Empty string where the "
+            "supplied material establishes none."
+        ),
+        allow_empty=True,
+    ),
+    FieldSpec(
+        name="tactic_name",
+        kind=FieldKind.STRING,
+        description=(
+            "The tactic's name, copied exactly from the supplied MITRE material that names "
+            "it. Empty string where the supplied material carries the identifier but not the "
+            "name, and where it carries neither. Never supply a name from your own knowledge: "
+            "a name you were not given is a fabrication even when the identifier is correct."
+        ),
+        allow_empty=True,
+    ),
+    FieldSpec(
+        name="technique_id",
+        kind=FieldKind.STRING,
+        description=(
+            "The technique identifier in official form, written as '<TECHNIQUE_ID>'. Use only "
+            "identifiers present in the supplied MITRE material."
+        ),
+    ),
+    FieldSpec(
+        name="technique_name",
+        kind=FieldKind.STRING,
+        description=(
+            "The technique's name, copied exactly from the supplied MITRE material that names "
+            "it. Empty string where the supplied material does not name it. Never supply a "
+            "name from your own knowledge."
+        ),
+        allow_empty=True,
+    ),
+    FieldSpec(
+        name="confidence",
+        kind=FieldKind.NUMBER,
+        description=(
+            "How well the supplied material establishes this specific mapping, from 0.0 to "
+            "1.0. This is about the mapping alone, not about the rule and not about your "
+            "answer as a whole."
+        ),
+        minimum=0.0,
+        maximum=1.0,
+    ),
+)
+"""The ATT&CK identity a mapping states, shared by every mapping shape.
+
+Declared once so a rule's mapping and a claimed mapping cannot drift apart, and
+so the anti-fabrication wording is stated in exactly one place.
+"""
 
 MITRE_MAPPING_SPEC: Final[ObjectSpec] = ObjectSpec(
     name="MitreMapping",
     description="One ATT&CK mapping a rule declares.",
-    fields=(
-        FieldSpec(
-            name="tactic_id",
-            kind=FieldKind.STRING,
-            description=(
-                "The tactic identifier in official form, for example 'TA0002'. Use only "
-                "identifiers present in the supplied MITRE material. Empty string where the "
-                "supplied material establishes none."
-            ),
-            allow_empty=True,
-        ),
-        FieldSpec(
-            name="technique_id",
-            kind=FieldKind.STRING,
-            description=(
-                "The technique identifier in official form, for example 'T1059.001'. Use only "
-                "identifiers present in the supplied MITRE material."
-            ),
-        ),
-    ),
+    fields=_MITRE_NAME_FIELDS,
 )
 
 RULE_SPEC: Final[ObjectSpec] = ObjectSpec(
@@ -326,6 +378,17 @@ RULE_SPEC: Final[ObjectSpec] = ObjectSpec(
             name="false_positives",
             kind=FieldKind.STRING_ARRAY,
             description="The benign activity a deployment should expect this rule to match.",
+        ),
+        FieldSpec(
+            name="tags",
+            kind=FieldKind.STRING_ARRAY,
+            description=(
+                "Short labels classifying the rule — the platform, data source or behaviour "
+                "it concerns. Each must be justified by the rule itself or by the supplied "
+                "material. A tag is a classification, not an assertion of external fact: do "
+                "not tag with a threat group, campaign or product the supplied material does "
+                "not mention. Empty array where none is justified."
+            ),
         ),
         FieldSpec(
             name="investigation_guide",
@@ -471,22 +534,9 @@ RATIONALE_SPEC: Final[ObjectSpec] = ObjectSpec(
 
 GENERATED_MAPPING_SPEC: Final[ObjectSpec] = ObjectSpec(
     name="MappingClaim",
-    description="One ATT&CK mapping claimed for the generated rule, with its evidence.",
+    description="One ATT&CK mapping claimed for a rule, with the material establishing it.",
     fields=(
-        FieldSpec(
-            name="tactic_id",
-            kind=FieldKind.STRING,
-            description=(
-                "The tactic identifier, from the supplied MITRE material only. Empty string "
-                "where the supplied material establishes none."
-            ),
-            allow_empty=True,
-        ),
-        FieldSpec(
-            name="technique_id",
-            kind=FieldKind.STRING,
-            description="The technique identifier, from the supplied MITRE material only.",
-        ),
+        *_MITRE_NAME_FIELDS,
         FieldSpec(
             name="support",
             kind=FieldKind.STRING,
@@ -562,7 +612,63 @@ ANALYZE_SPEC: Final[ObjectSpec] = ObjectSpec(
         "The assessment of the supplied rule. Report what is wrong with it, what it misses "
         "and how it can be evaded. Do not rewrite the rule."
     ),
-    fields=_envelope(ReasoningOperation.ANALYZE),
+    fields=(
+        *_envelope(ReasoningOperation.ANALYZE),
+        FieldSpec(
+            name="score",
+            kind=FieldKind.INTEGER,
+            description=(
+                "The rule's quality as a detection, from 0 to 100, where 100 is a rule with "
+                "no weakness the supplied material reveals. This judges the rule, not your "
+                "certainty: a well-supported assessment of a poor rule scores low. It must "
+                "agree with your findings — a score above 70 alongside a critical finding is "
+                "a contradiction."
+            ),
+            minimum=0,
+            maximum=100,
+        ),
+        FieldSpec(
+            name="fp_risk",
+            kind=FieldKind.STRING,
+            description=(
+                "How likely this rule is to fire on benign activity, judged from the rule's "
+                "own breadth and from what the supplied material says about the behaviour it "
+                "matches."
+            ),
+            enum=_values(FalsePositiveRisk),
+        ),
+        FieldSpec(
+            name="strengths",
+            kind=FieldKind.STRING_ARRAY,
+            description=(
+                "What the rule does well, one item per strength, each in one line. State only "
+                "strengths the rule text or the supplied material demonstrates. Empty array "
+                "where the material shows none — an empty array is a real answer, and "
+                "inventing a compliment is a fabrication like any other."
+            ),
+        ),
+        FieldSpec(
+            name="evasion_risks",
+            kind=FieldKind.STRING_ARRAY,
+            description=(
+                "How an attacker could avoid this rule while still performing the behaviour "
+                "it targets, one item per route, each in one line. Every route must rest on "
+                "the rule's own logic or on the supplied material — an abbreviation, flag or "
+                "alternative the material lists. Do not describe evasions from your own "
+                "knowledge of the technique. Empty array where the material supports none."
+            ),
+        ),
+        FieldSpec(
+            name="mappings",
+            kind=FieldKind.OBJECT_ARRAY,
+            description=(
+                "The ATT&CK mappings the supplied material establishes for this rule, each "
+                "with the items establishing it. Empty array where the material supports "
+                "none. Do not map the rule to a technique the material does not carry."
+            ),
+            spec=GENERATED_MAPPING_SPEC,
+        ),
+    ),
 )
 
 ENHANCE_SPEC: Final[ObjectSpec] = ObjectSpec(
@@ -633,6 +739,18 @@ GENERATE_SPEC: Final[ObjectSpec] = ObjectSpec(
                 "material establishing it. Empty array where the material supports none."
             ),
             spec=GENERATED_MAPPING_SPEC,
+        ),
+        FieldSpec(
+            name="score",
+            kind=FieldKind.INTEGER,
+            description=(
+                "How good a detection the rule you just wrote is, from 0 to 100, judged "
+                "against the requirement and the material you were given. Score the rule, not "
+                "your certainty, and do not score it well because you wrote it: a rule the "
+                "supplied material could not fully ground scores lower."
+            ),
+            minimum=0,
+            maximum=100,
         ),
     ),
 )

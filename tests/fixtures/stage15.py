@@ -276,6 +276,7 @@ def _envelope(package: ContextPackage, operation: ReasoningOperation) -> dict[st
                 "at no cost.",
                 "addresses": ["F1"],
                 "support": "supported",
+                "code_snippet": "process.command_line:(*-enc* or *-e * or *-encodedcommand*)",
             }
         ],
         "confidence": 0.72,
@@ -298,13 +299,48 @@ def _rule_object() -> dict[str, Any]:
         "index_patterns": ["logs-endpoint.events.process-*"],
         "false_positives": ["Administrative scripts that pass encoded commands"],
         "investigation_guide": "Decode the base64 argument and review the parent process.",
-        "mitre": [{"tactic_id": "", "technique_id": "T1059.001"}],
+        "mitre": [
+            {
+                "tactic_id": "",
+                "tactic_name": "",
+                "technique_id": "T1059.001",
+                "technique_name": "",
+                "confidence": 0.8,
+            }
+        ],
+        "tags": ["Windows", "PowerShell"],
+    }
+
+
+def _mapping_claim(package: ContextPackage) -> dict[str, Any]:
+    """Return one ATT&CK mapping claim the supplied package establishes.
+
+    The names are left empty on purpose: the fixture's supplied material carries
+    the identifier without naming the technique, and an empty name is what the
+    contract asks for in that case.
+    """
+    return {
+        "tactic_id": "",
+        "tactic_name": "",
+        "technique_id": "T1059.001",
+        "technique_name": "",
+        "confidence": 0.75,
+        "support": "supported",
+        "evidence": _evidence(package),
     }
 
 
 def analyze_response(package: ContextPackage) -> dict[str, Any]:
     """Return a valid analyze response for a package."""
-    return _envelope(package, ReasoningOperation.ANALYZE)
+    body = _envelope(package, ReasoningOperation.ANALYZE)
+    body["score"] = 62
+    body["fp_risk"] = "medium"
+    body["strengths"] = ["Targets powershell.exe directly rather than by parent process"]
+    body["evasion_risks"] = [
+        "The supplied LOLBAS material lists -e and -encodedcommand, which the query misses"
+    ]
+    body["mappings"] = [_mapping_claim(package)]
+    return body
 
 
 def enhance_response(package: ContextPackage) -> dict[str, Any]:
@@ -332,6 +368,11 @@ def enhance_response(package: ContextPackage) -> dict[str, Any]:
     return body
 
 
+def _generate_extras(package: ContextPackage) -> dict[str, Any]:
+    """Return the generate-only fields of a valid response."""
+    return {"mappings": [_mapping_claim(package)], "score": 71}
+
+
 def generate_response(package: ContextPackage) -> dict[str, Any]:
     """Return a valid generate response for a package."""
     body = _envelope(package, ReasoningOperation.GENERATE)
@@ -345,14 +386,7 @@ def generate_response(package: ContextPackage) -> dict[str, Any]:
             "evidence": _evidence(package),
         }
     ]
-    body["mappings"] = [
-        {
-            "tactic_id": "",
-            "technique_id": "T1059.001",
-            "support": "supported",
-            "evidence": _evidence(package),
-        }
-    ]
+    body.update(_generate_extras(package))
     return body
 
 

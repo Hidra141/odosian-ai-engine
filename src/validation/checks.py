@@ -19,6 +19,7 @@ of what the result *says*, and rule-shape coherence for a produced rule.
 
 from __future__ import annotations
 
+import math
 import re
 from collections.abc import Iterator, Sequence
 from dataclasses import dataclass, fields
@@ -47,11 +48,31 @@ from src.core.types import (
 from src.prompts.placeholders import find_placeholders
 
 from .models import ValidationIssue
-from .supplied import SuppliedContext, citations, claimed_identifiers, texts
+from .supplied import (
+    SuppliedContext,
+    attack_mappings,
+    citations,
+    claimed_identifiers,
+    produced_rules,
+    texts,
+)
 from .types import IssueSeverity, ValidationCode
 
 _WHITESPACE: Final[re.Pattern[str]] = re.compile(r"\s+")
 _URL: Final[re.Pattern[str]] = re.compile(r"https?://[^\s\"'<>)\]]+")
+
+_ASSERTED_IDENTIFIER: Final[re.Pattern[str]] = re.compile(
+    r"\b(?:TA\d{4}|T\d{4}(?:\.\d{3})?|M\d{4}|S\d{4}|G\d{4}|DS\d{4}|CVE-\d{4}-\d{4,7})\b"
+)
+"""The identifier shapes a free-text claim can assert.
+
+Prose as a whole cannot be checked against the supplied material: a paraphrase
+is not a substring, and demanding one would reject exactly the summarising the
+model is asked to do. An identifier sitting inside that prose is a different
+thing — a verifiable assertion about the corpus, in a form that cannot be
+paraphrased away. So the sentence is left alone and the identifiers within it
+are held to the same rule as identifiers anywhere else.
+"""
 
 _RESULT_TYPES: Final[dict[ReasoningOperation, type[OperationResult]]] = {
     ReasoningOperation.ANALYZE: AnalyzeResult,
@@ -177,26 +198,17 @@ class StructuralChecker:
 
     def _ranges(self, result: OperationResult) -> Iterator[ValidationIssue]:
         """Yield an issue for every number outside its permitted range."""
-        if not 0.0 <= result.confidence <= 1.0:
-            yield _issue(
-                ValidationCode.OUT_OF_RANGE,
-                "confidence",
-                f"{result.confidence} is outside 0.0..1.0",
-            )
+        yield from _bounded("confidence", result.confidence, 0.0, 1.0)
         for index, finding in enumerate(result.findings):
-            if not 0.0 <= finding.confidence <= 1.0:
-                yield _issue(
-                    ValidationCode.OUT_OF_RANGE,
-                    f"findings[{index}].confidence",
-                    f"{finding.confidence} is outside 0.0..1.0",
-                )
-        for path, rule in _produced_rules(result):
-            if not 0 <= rule.risk_score <= 100:
-                yield _issue(
-                    ValidationCode.OUT_OF_RANGE,
-                    f"{path}.risk_score",
-                    f"{rule.risk_score} is outside 0..100",
-                )
+            yield from _bounded(
+                f"findings[{index}].confidence", finding.confidence, 0.0, 1.0
+            )
+        for path, rule in produced_rules(result):
+            yield from _bounded(f"{path}.risk_score", rule.risk_score, 0, 100)
+        for path, mapping in attack_mappings(result):
+            yield from _bounded(f"{path}.confidence", mapping.confidence, 0.0, 1.0)
+        if isinstance(result, AnalyzeResult | GenerateResult):
+            yield from _bounded("score", result.score, 0, 100)
 
     def _required_text(self, result: OperationResult) -> Iterator[ValidationIssue]:
         """Yield an issue for a required string that is empty or spans lines."""
@@ -211,10 +223,17 @@ class StructuralChecker:
         for index, entry in enumerate(result.uncertainties):
             required[f"uncertainties[{index}].identifier"] = entry.identifier
             required[f"uncertainties[{index}].treatment"] = entry.treatment
-        for path, rule in _produced_rules(result):
+        for path, rule in produced_rules(result):
             required[f"{path}.title"] = rule.title
             required[f"{path}.query"] = rule.query
             required[f"{path}.investigation_guide"] = rule.investigation_guide
+            for index, tag in enumerate(rule.tags):
+                required[f"{path}.tags[{index}]"] = tag
+        if isinstance(result, AnalyzeResult):
+            for index, value in enumerate(result.strengths):
+                required[f"strengths[{index}]"] = value
+            for index, value in enumerate(result.evasion_risks):
+                required[f"evasion_risks[{index}]"] = value
         for path, value in required.items():
             if not value.strip():
                 yield _issue(ValidationCode.MISSING_VALUE, path, "required value is empty")
@@ -318,7 +337,60 @@ class EvidenceChecker:
                     f"{identifier!r} does not occur in the supplied material",
                 )
         yield from self._claimed(result, supplied)
+        yield from self._names(result, supplied)
+        yield from self._asserted(result, supplied)
         yield from self._supported_claims(result)
+
+    def _names(
+        self,
+        result: OperationResult,
+        supplied: SuppliedContext,
+    ) -> Iterator[ValidationIssue]:
+        """Yield an issue for an ATT&CK name the supplied material never carried.
+
+        A name is checked loosely — case and spacing folded — because the model
+        is copying prose out of a record, not reproducing an identifier. What it
+        may not do is supply a name from memory: a correct identifier is no
+        licence for a remembered name, and a name nobody supplied is a
+        fabrication even when everything around it is right. An empty name is
+        the contract's way of saying the material named nothing, so it passes.
+        """
+        for path, mapping in attack_mappings(result):
+            for field_name, value in (
+                ("tactic_name", mapping.tactic_name),
+                ("technique_name", mapping.technique_name),
+            ):
+                name = value.strip()
+                if name and not supplied.mentions(name):
+                    yield _issue(
+                        ValidationCode.FABRICATED_NAME,
+                        f"{path}.{field_name}",
+                        f"{name!r} does not occur in the supplied material",
+                    )
+
+    def _asserted(
+        self,
+        result: OperationResult,
+        supplied: SuppliedContext,
+    ) -> Iterator[ValidationIssue]:
+        """Yield an issue for an identifier asserted inside free text but never supplied.
+
+        Covers what the result *says* as opposed to what it structurally claims:
+        a strength, an evasion route, a tag, a recommendation's code fragment.
+        The sentence itself is not checked — a paraphrase is not a substring —
+        but an ATT&CK or CVE identifier written inside one is an assertion about
+        the corpus, and it is held to the same rule as an identifier in a
+        citation.
+        """
+        for path, value in texts(result):
+            for identifier in dict.fromkeys(_ASSERTED_IDENTIFIER.findall(value)):
+                if not supplied.supplies(identifier):
+                    yield _issue(
+                        ValidationCode.FABRICATED_IDENTIFIER,
+                        path,
+                        f"{identifier!r} is asserted here but does not occur in the "
+                        "supplied material",
+                    )
 
     def _claimed(
         self,
@@ -454,7 +526,7 @@ class UncertaintyChecker:
                     f"the claim rests on {identifier}, which the supplied context reports as "
                     f"{entry.status.value}, yet declares support 'supported'",
                 )
-        for path, rule in _produced_rules(result):
+        for path, rule in produced_rules(result):
             for index, mapping in enumerate(rule.mitre):
                 for name, identifier in (
                     ("technique_id", mapping.technique_id),
@@ -482,7 +554,7 @@ class RuleIntegrityChecker:
         operation: ReasoningOperation,
     ) -> Iterator[ValidationIssue]:
         """Yield the rule integrity issues of one result."""
-        for path, rule in _produced_rules(result):
+        for path, rule in produced_rules(result):
             yield from self._shape(path, rule)
             yield from self._mappings(path, rule, supplied)
         if isinstance(result, EnhanceResult):
@@ -672,14 +744,6 @@ _UNSETTLED_STATUSES: Final[frozenset[EvidenceStatus]] = frozenset(
 )
 
 
-def _produced_rules(result: OperationResult) -> Iterator[tuple[str, DetectionRuleDraft]]:
-    """Yield every rule a result produced, with the field it came from."""
-    if isinstance(result, EnhanceResult):
-        yield "enhanced_rule", result.enhanced_rule
-    if isinstance(result, GenerateResult):
-        yield "generated_rule", result.generated_rule
-
-
 def _support_of(result: OperationResult, path: str) -> SupportLevel | None:
     """Return the support level of the claim a citation path belongs to."""
     index = _leading_index(path)
@@ -698,6 +762,46 @@ def _leading_index(path: str) -> int | None:
     """Return the first bracketed index of a path, when it has one."""
     match = re.search(r"\[(\d+)\]", path)
     return int(match.group(1)) if match else None
+
+
+def _bounded(
+    path: str,
+    value: float,
+    low: float,
+    high: float,
+) -> Iterator[ValidationIssue]:
+    """Yield an issue when a number is not a real value inside its range.
+
+    ``NaN`` fails every comparison, so a naive ``low <= value <= high`` lets it
+    through as "not outside" the range. It is rejected explicitly, together with
+    the infinities and with ``bool`` — which Python counts as an integer and
+    which no numeric field here ever means.
+    """
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        yield _issue(
+            ValidationCode.OUT_OF_RANGE,
+            path,
+            f"{value!r} is not a number",
+        )
+        return
+    if not math.isfinite(value):
+        yield _issue(
+            ValidationCode.OUT_OF_RANGE,
+            path,
+            f"{value} is not a finite number",
+        )
+        return
+    if not low <= value <= high:
+        yield _issue(
+            ValidationCode.OUT_OF_RANGE,
+            path,
+            f"{value} is outside {_number(low)}..{_number(high)}",
+        )
+
+
+def _number(value: float) -> str:
+    """Return a bound rendered as the contract states it."""
+    return str(int(value)) if float(value).is_integer() and abs(value) > 1 else str(value)
 
 
 def _duplicates(prefix: str, values: Sequence[str]) -> Iterator[ValidationIssue]:

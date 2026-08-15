@@ -40,6 +40,7 @@ from typing import Final, final
 from src.context.models import ContextPackage
 
 from .exceptions import ReasoningValidationError
+from .identifiers import occurs_as_identifier
 from .models import (
     AnalyzeResult,
     DetectionRuleDraft,
@@ -113,8 +114,15 @@ class SuppliedMaterial:
         return cls(item_ids=frozenset(ids), text="\n".join(parts))
 
     def supplies(self, identifier: str) -> bool:
-        """Return whether an identifier occurs in the supplied material."""
-        return identifier in self.text
+        """Return whether an identifier occurs in the supplied material as itself.
+
+        Plain containment was not enough: material carrying ``T1059.001`` also
+        contains ``T105``, so a technique the corpus never named could be
+        asserted from a neighbouring one. The occurrence must be the whole
+        identifier, by the rule :mod:`src.core.identifiers` states once for both
+        validation layers.
+        """
+        return occurs_as_identifier(identifier, self.text)
 
 
 @final

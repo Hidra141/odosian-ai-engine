@@ -55,6 +55,7 @@ from .schema import SchemaValidator
 from .types import (
     ChangeCategory,
     EvidenceSource,
+    FalsePositiveRisk,
     FindingCategory,
     ImportanceLevel,
     OutputLanguage,
@@ -118,7 +119,14 @@ class ResponseParser:
         }
         match operation:
             case ReasoningOperation.ANALYZE:
-                return AnalyzeResult(**common)  # type: ignore[arg-type]
+                return AnalyzeResult(
+                    **common,  # type: ignore[arg-type]
+                    score=_integer(document, "score"),
+                    fp_risk=FalsePositiveRisk(_text(document, "fp_risk")),
+                    strengths=_strings(document, "strengths"),
+                    evasion_risks=_strings(document, "evasion_risks"),
+                    mappings=tuple(_mapping(entry) for entry in _objects(document, "mappings")),
+                )
             case ReasoningOperation.ENHANCE:
                 return EnhanceResult(
                     **common,  # type: ignore[arg-type]
@@ -134,6 +142,7 @@ class ResponseParser:
                         _rationale(entry) for entry in _objects(document, "rationale")
                     ),
                     mappings=tuple(_mapping(entry) for entry in _objects(document, "mappings")),
+                    score=_integer(document, "score"),
                 )
 
 
@@ -161,6 +170,7 @@ def _recommendation(entry: JSONObject) -> Recommendation:
         rationale=_text(entry, "rationale"),
         addresses=_strings(entry, "addresses"),
         support=SupportLevel(_text(entry, "support")),
+        code_snippet=_text(entry, "code_snippet"),
     )
 
 
@@ -198,6 +208,7 @@ def _rule(entry: JSONObject) -> DetectionRuleDraft:
         false_positives=_strings(entry, "false_positives"),
         investigation_guide=_text(entry, "investigation_guide"),
         mitre=tuple(_mitre(item) for item in _objects(entry, "mitre")),
+        tags=_strings(entry, "tags"),
     )
 
 
@@ -206,6 +217,9 @@ def _mitre(entry: JSONObject) -> MitreMapping:
     return MitreMapping(
         tactic_id=_text(entry, "tactic_id"),
         technique_id=_text(entry, "technique_id"),
+        tactic_name=_text(entry, "tactic_name"),
+        technique_name=_text(entry, "technique_name"),
+        confidence=_number(entry, "confidence"),
     )
 
 
@@ -250,6 +264,9 @@ def _mapping(entry: JSONObject) -> MappingClaim:
         technique_id=_text(entry, "technique_id"),
         support=SupportLevel(_text(entry, "support")),
         evidence=tuple(_evidence(item) for item in _objects(entry, "evidence")),
+        tactic_name=_text(entry, "tactic_name"),
+        technique_name=_text(entry, "technique_name"),
+        confidence=_number(entry, "confidence"),
     )
 
 

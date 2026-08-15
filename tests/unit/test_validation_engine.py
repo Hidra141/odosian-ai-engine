@@ -549,7 +549,14 @@ def test_a_result_with_nothing_in_it_is_still_judged():
     )
     result, source_package = result_for(ReasoningOperation.ANALYZE)
     empty = dataclasses.replace(
-        result, findings=(), recommendations=(), uncertainties=(), metadata={}
+        result,
+        findings=(),
+        recommendations=(),
+        uncertainties=(),
+        metadata={},
+        strengths=(),
+        evasion_risks=(),
+        mappings=(),
     )
     report = ENGINE.validate(empty, package)
     assert report.is_valid

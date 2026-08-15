@@ -89,6 +89,7 @@ class ValidationCode(StrEnum):
     # Evidence
     UNKNOWN_ITEM = "evidence.unknown_item"
     FABRICATED_IDENTIFIER = "evidence.fabricated_identifier"
+    FABRICATED_NAME = "evidence.fabricated_name"
     UNSUPPORTED_CLAIM = "evidence.unsupported_claim"
     EMPTY_CITATION = "evidence.empty_citation"
 

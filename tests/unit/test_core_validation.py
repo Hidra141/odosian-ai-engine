@@ -153,10 +153,25 @@ def test_an_enhanced_rule_identical_to_the_original_is_rejected():
     assert "rule_unchanged" in checks(_validate(payload, package, ReasoningOperation.ENHANCE))
 
 
+def _mitre(technique_id: str) -> dict[str, object]:
+    """Return a schema-complete rule mapping naming one technique.
+
+    The names stay empty: these cases are about the identifier, and a name the
+    supplied material never carried is exactly what must not be written.
+    """
+    return {
+        "tactic_id": "",
+        "tactic_name": "",
+        "technique_id": technique_id,
+        "technique_name": "",
+        "confidence": 0.5,
+    }
+
+
 def test_a_produced_rule_may_not_map_to_an_unsettled_identifier():
     package = fixtures.context_package(ContextOperation.ENHANCE)
     payload = fixtures.enhance_response(package)
-    payload["enhanced_rule"]["mitre"] = [{"tactic_id": "", "technique_id": "T1562"}]
+    payload["enhanced_rule"]["mitre"] = [_mitre("T1562")]
     assert "unsettled_identifier_in_rule" in checks(
         _validate(payload, package, ReasoningOperation.ENHANCE)
     )
@@ -165,7 +180,7 @@ def test_a_produced_rule_may_not_map_to_an_unsettled_identifier():
 def test_a_produced_rule_may_not_map_to_an_identifier_that_was_never_supplied():
     package = fixtures.context_package(ContextOperation.ENHANCE)
     payload = fixtures.enhance_response(package)
-    payload["enhanced_rule"]["mitre"] = [{"tactic_id": "", "technique_id": "T1055.012"}]
+    payload["enhanced_rule"]["mitre"] = [_mitre("T1055.012")]
     assert "fabricated_identifier" in checks(
         _validate(payload, package, ReasoningOperation.ENHANCE)
     )

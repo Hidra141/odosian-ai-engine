@@ -86,6 +86,22 @@ class ImportanceLevel(StrEnum):
     LOW = "low"
 
 
+class FalsePositiveRisk(StrEnum):
+    """How likely the rule is to fire on benign activity.
+
+    A property of the rule, not of the analysis. It shares its four values with
+    :class:`ImportanceLevel` but is kept separate because the two answer
+    different questions: how noisy the rule is, against how much a finding
+    matters. Collapsing them would make a change to either silently change the
+    other.
+    """
+
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+
+
 class SupportLevel(StrEnum):
     """How well the supplied context supports a claim.
 
