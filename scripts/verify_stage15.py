@@ -102,6 +102,7 @@ STAGE_15_PATHS: Final[tuple[str, ...]] = (
     "src/core/",
     "src/validation/",
     "src/formatter/",
+    "src/application/",
     "tests/",
     "scripts/",
     "docs/",
