@@ -110,7 +110,8 @@ def test_the_new_fields_carry_their_intended_kinds():
     assert field_at(analyze, "score").kind is FieldKind.INTEGER
     assert field_at(analyze, "fp_risk").kind is FieldKind.STRING
     assert field_at(analyze, "strengths").kind is FieldKind.STRING_ARRAY
-    assert field_at(analyze, "evasion_risks").kind is FieldKind.STRING_ARRAY
+    assert field_at(analyze, "evasion_risks").kind is FieldKind.OBJECT_ARRAY
+    assert field_at(analyze, "weaknesses").kind is FieldKind.STRING_ARRAY
     assert field_at(analyze, "mappings").kind is FieldKind.OBJECT_ARRAY
     assert field_at(ReasoningOperation.GENERATE, "score").kind is FieldKind.INTEGER
     rule = field_at(ReasoningOperation.GENERATE, "generated_rule.tags")
@@ -313,7 +314,10 @@ def test_the_analyze_judgements_survive_into_the_typed_result():
     assert result.score == document["score"]
     assert result.fp_risk is FalsePositiveRisk(document["fp_risk"])
     assert result.strengths == tuple(document["strengths"])
-    assert result.evasion_risks == tuple(document["evasion_risks"])
+    assert [r.technique for r in result.evasion_risks] == [
+        e["technique"] for e in document["evasion_risks"]
+    ]
+    assert result.weaknesses == tuple(document["weaknesses"])
     assert result.mappings[0].technique_id == "T1059.001"
     assert result.mappings[0].confidence == 0.75
 
@@ -348,3 +352,72 @@ def test_a_recommendation_code_snippet_survives_into_the_typed_result():
     assert result.recommendations[0].code_snippet == (
         document["recommendations"][0]["code_snippet"]
     )
+
+
+# Phase C — contract compatibility fields
+
+
+def test_analyze_declares_weaknesses_separately_from_findings():
+    """The contract carries both; one is not a restatement of the other."""
+    names = set(spec_for(ReasoningOperation.ANALYZE).field_names())
+    assert {"weaknesses", "findings"} <= names
+    described = field_at(ReasoningOperation.ANALYZE, "weaknesses").description
+    assert "not a restatement of the findings" in described
+
+
+def test_evasion_risks_carry_the_three_parts_the_contract_needs():
+    spec = field_at(ReasoningOperation.ANALYZE, "evasion_risks")
+    assert spec.kind is FieldKind.OBJECT_ARRAY
+    assert spec.spec is not None
+    assert spec.spec.field_names() == ("technique", "description", "mitigation")
+
+
+def test_every_mapping_carries_the_parent_technique_fields():
+    for operation in OPERATIONS:
+        shapes = [
+            item
+            for _, item in walk(spec_for(operation))
+            if item.spec is not None and "technique_id" in item.spec.field_names()
+        ]
+        assert shapes
+        for item in shapes:
+            assert item.spec is not None
+            assert {"parent_technique_id", "parent_technique_name"} <= set(
+                item.spec.field_names()
+            )
+
+
+def test_a_parent_technique_may_be_empty_and_is_never_truncated_from_a_child():
+    spec = field_at(ReasoningOperation.ANALYZE, "mappings.parent_technique_id")
+    assert spec.allow_empty
+    assert "never derive a parent by truncating" in spec.description.lower()
+
+
+def test_generate_declares_notes_as_forward_looking_not_a_summary():
+    spec = field_at(ReasoningOperation.GENERATE, "notes")
+    assert spec.kind is FieldKind.STRING
+    assert spec.allow_empty
+    assert "not a summary of what you already wrote" in spec.description
+
+
+def test_the_new_compatibility_fields_survive_into_the_typed_results():
+    document, _ = payload_for(ReasoningOperation.ANALYZE)
+    analyze = PARSER.parse(
+        ReasoningOperation.ANALYZE, fixtures.response_of(fixtures.body_of(document))
+    )
+    assert analyze.weaknesses == tuple(document["weaknesses"])
+    assert analyze.evasion_risks[0].technique == document["evasion_risks"][0]["technique"]
+    assert analyze.evasion_risks[0].mitigation == document["evasion_risks"][0]["mitigation"]
+    assert analyze.mappings[0].parent_technique_id == ""
+
+    body, _ = payload_for(ReasoningOperation.GENERATE)
+    generate = PARSER.parse(
+        ReasoningOperation.GENERATE, fixtures.response_of(fixtures.body_of(body))
+    )
+    assert generate.notes == body["notes"]
+
+
+def test_no_runtime_field_crept_in_with_the_compatibility_extension():
+    for operation in OPERATIONS:
+        declared = {name.rsplit(".", 1)[-1] for name, _ in walk(spec_for(operation))}
+        assert not declared & {"rating", "userId", "createdAt", "latencyMs", "references"}

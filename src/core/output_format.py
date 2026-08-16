@@ -304,6 +304,27 @@ _MITRE_NAME_FIELDS: Final[tuple[FieldSpec, ...]] = (
         minimum=0.0,
         maximum=1.0,
     ),
+    FieldSpec(
+        name="parent_technique_id",
+        kind=FieldKind.STRING,
+        description=(
+            "When the technique above is a sub-technique, its parent technique's identifier, "
+            "copied from the supplied material that states the parent. Empty string when the "
+            "technique is not a sub-technique, and empty string when the material does not "
+            "state the parent. Never derive a parent by truncating an identifier."
+        ),
+        allow_empty=True,
+    ),
+    FieldSpec(
+        name="parent_technique_name",
+        kind=FieldKind.STRING,
+        description=(
+            "The parent technique's name, copied exactly from the supplied material that "
+            "names it. Empty string where the material does not name it. Like every other "
+            "name here, it is copied and never recalled."
+        ),
+        allow_empty=True,
+    ),
 )
 """The ATT&CK identity a mapping states, shared by every mapping shape.
 
@@ -553,6 +574,39 @@ GENERATED_MAPPING_SPEC: Final[ObjectSpec] = ObjectSpec(
 )
 
 
+EVASION_RISK_SPEC: Final[ObjectSpec] = ObjectSpec(
+    name="EvasionRisk",
+    description="One way an attacker could avoid this rule while still doing the thing.",
+    fields=(
+        FieldSpec(
+            name="technique",
+            kind=FieldKind.STRING,
+            description=(
+                "What the attacker changes, named in a few words — the abbreviation, flag, "
+                "path or ordering they vary. It must be one the supplied material lists."
+            ),
+        ),
+        FieldSpec(
+            name="description",
+            kind=FieldKind.STRING,
+            description=(
+                "Why that change defeats this rule, in one line, referring to the part of "
+                "the query it slips past."
+            ),
+        ),
+        FieldSpec(
+            name="mitigation",
+            kind=FieldKind.STRING,
+            description=(
+                "What would catch it instead, in one line. State only a change the supplied "
+                "material supports; where the material suggests none, say that plainly "
+                "rather than inventing one."
+            ),
+        ),
+    ),
+)
+
+
 def _envelope(operation: ReasoningOperation) -> tuple[FieldSpec, ...]:
     """Return the shared envelope fields, in the order ``shared/output.md`` states them."""
     return (
@@ -648,15 +702,27 @@ ANALYZE_SPEC: Final[ObjectSpec] = ObjectSpec(
             ),
         ),
         FieldSpec(
-            name="evasion_risks",
+            name="weaknesses",
             kind=FieldKind.STRING_ARRAY,
             description=(
-                "How an attacker could avoid this rule while still performing the behaviour "
-                "it targets, one item per route, each in one line. Every route must rest on "
-                "the rule's own logic or on the supplied material — an abbreviation, flag or "
-                "alternative the material lists. Do not describe evasions from your own "
-                "knowledge of the technique. Empty array where the material supports none."
+                "The rule's shortcomings, one per item, each stated in one line as a plain "
+                "shortcoming rather than a fix. This is a short account a reader can scan; "
+                "it is not a restatement of the findings list and must not be produced by "
+                "copying it. Say the weakness itself, not the evidence for it. Empty array "
+                "where the supplied material shows none."
             ),
+        ),
+        FieldSpec(
+            name="evasion_risks",
+            kind=FieldKind.OBJECT_ARRAY,
+            description=(
+                "How an attacker could avoid this rule while still performing the behaviour "
+                "it targets, one entry per route. Every route must rest on the rule's own "
+                "logic or on the supplied material — an abbreviation, flag or alternative the "
+                "material lists. Do not describe evasions from your own knowledge of the "
+                "technique. Empty array where the material supports none."
+            ),
+            spec=EVASION_RISK_SPEC,
         ),
         FieldSpec(
             name="mappings",
@@ -751,6 +817,17 @@ GENERATE_SPEC: Final[ObjectSpec] = ObjectSpec(
             ),
             minimum=0,
             maximum=100,
+        ),
+        FieldSpec(
+            name="notes",
+            kind=FieldKind.STRING,
+            description=(
+                "What a deployment should weigh before running this rule, in one line — the "
+                "tuning, exclusion or follow-up you would advise next. This looks forward at "
+                "what remains to be done, and is not a summary of what you already wrote. "
+                "Empty string where the supplied material suggests nothing further."
+            ),
+            allow_empty=True,
         ),
     ),
 )

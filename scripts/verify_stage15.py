@@ -101,6 +101,7 @@ and the check failed on both when only one could be wrong."""
 STAGE_15_PATHS: Final[tuple[str, ...]] = (
     "src/core/",
     "src/validation/",
+    "src/formatter/",
     "tests/",
     "scripts/",
     "docs/",

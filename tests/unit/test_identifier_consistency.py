@@ -85,6 +85,8 @@ def test_stage15_rejects_a_fabricated_fragment_in_a_produced_rule():
             "technique_id": "T105",
             "technique_name": "",
             "confidence": 0.5,
+            "parent_technique_id": "",
+            "parent_technique_name": "",
         }
     ]
     outcome = validate_stage15(payload, package, ReasoningOperation.ENHANCE)

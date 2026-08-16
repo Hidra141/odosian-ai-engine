@@ -306,6 +306,8 @@ def _rule_object() -> dict[str, Any]:
                 "technique_id": "T1059.001",
                 "technique_name": "",
                 "confidence": 0.8,
+                "parent_technique_id": "",
+                "parent_technique_name": "",
             }
         ],
         "tags": ["Windows", "PowerShell"],
@@ -325,6 +327,8 @@ def _mapping_claim(package: ContextPackage) -> dict[str, Any]:
         "technique_id": "T1059.001",
         "technique_name": "",
         "confidence": 0.75,
+        "parent_technique_id": "",
+        "parent_technique_name": "",
         "support": "supported",
         "evidence": _evidence(package),
     }
@@ -336,8 +340,13 @@ def analyze_response(package: ContextPackage) -> dict[str, Any]:
     body["score"] = 62
     body["fp_risk"] = "medium"
     body["strengths"] = ["Targets powershell.exe directly rather than by parent process"]
+    body["weaknesses"] = ["Matches only one spelling of the encoding flag"]
     body["evasion_risks"] = [
-        "The supplied LOLBAS material lists -e and -encodedcommand, which the query misses"
+        {
+            "technique": "-e abbreviation",
+            "description": "The query matches '-enc' only, so the shorter form slips past it.",
+            "mitigation": "Match every abbreviation the supplied LOLBAS material lists.",
+        }
     ]
     body["mappings"] = [_mapping_claim(package)]
     return body
@@ -370,7 +379,11 @@ def enhance_response(package: ContextPackage) -> dict[str, Any]:
 
 def _generate_extras(package: ContextPackage) -> dict[str, Any]:
     """Return the generate-only fields of a valid response."""
-    return {"mappings": [_mapping_claim(package)], "score": 71}
+    return {
+        "mappings": [_mapping_claim(package)],
+        "score": 71,
+        "notes": "Consider excluding the approved administrative tooling before deployment.",
+    }
 
 
 def generate_response(package: ContextPackage) -> dict[str, Any]:

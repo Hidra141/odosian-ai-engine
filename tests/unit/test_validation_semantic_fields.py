@@ -23,6 +23,7 @@ from src.context.types import ContextOperation
 from src.core.models import (
     AnalyzeRequest,
     EnhanceRequest,
+    EvasionRisk,
     GenerateRequest,
     MappingClaim,
     MitreMapping,
@@ -457,17 +458,31 @@ def test_grounded_evasion_risks_are_accepted():
 def test_an_evasion_risk_asserting_an_unsupplied_identifier_is_rejected():
     result, package = result_for(ReasoningOperation.ANALYZE)
     invented = dataclasses.replace(
-        result, evasion_risks=("An attacker could pivot to T9999 instead.",)
+        result,
+        evasion_risks=(
+            EvasionRisk(
+                technique="pivot",
+                description="An attacker could pivot to T9999 instead.",
+                mitigation="Match the supplied abbreviations.",
+            ),
+        ),
     )
     report = ENGINE.validate(invented, package)
     assert ValidationCode.FABRICATED_IDENTIFIER in codes(report)
-    assert any(i.path == "evasion_risks[0]" for i in report.errors)
+    assert any(i.path == "evasion_risks[0].description" for i in report.errors)
 
 
 def test_an_invented_advisory_url_in_an_evasion_risk_is_rejected():
     result, package = result_for(ReasoningOperation.ANALYZE)
     invented = dataclasses.replace(
-        result, evasion_risks=("See https://example.invalid/bypass for the technique.",)
+        result,
+        evasion_risks=(
+            EvasionRisk(
+                technique="documented bypass",
+                description="See https://example.invalid/bypass for the technique.",
+                mitigation="Match the supplied abbreviations.",
+            ),
+        ),
     )
     assert ValidationCode.FABRICATED_REFERENCE in codes(ENGINE.validate(invented, package))
 
@@ -571,7 +586,13 @@ def test_every_new_fault_in_one_result_is_reported_together():
             result,
             score=140,
             strengths=("Covers T9999.",),
-            evasion_risks=("Pivots to T8888.",),
+            evasion_risks=(
+                EvasionRisk(
+                    technique="pivot",
+                    description="Pivots to T8888.",
+                    mitigation="Match the supplied abbreviations.",
+                ),
+            ),
         ),
         confidence=3.0,
         technique_name="Remembered Name",
@@ -623,3 +644,115 @@ def test_a_mapping_claim_built_by_hand_is_judged_like_any_other():
         ValidationCode.FABRICATED_NAME,
         ValidationCode.OUT_OF_RANGE,
     } <= set(codes(report))
+
+
+# Phase C — the compatibility fields reach the boundary
+
+
+def test_a_fabricated_parent_technique_name_is_rejected():
+    """A parent name nobody supplied is a fabrication like any other name."""
+    result, package = result_for(ReasoningOperation.ANALYZE)
+    report = ENGINE.validate(
+        remap(result, parent_technique_name="Remembered Parent"), package
+    )
+    assert ValidationCode.FABRICATED_NAME in codes(report)
+    assert any(i.path == "mappings[0].parent_technique_name" for i in report.errors)
+
+
+def test_a_parent_name_the_material_carries_is_accepted():
+    """Grounding decides, exactly as for any other name."""
+    result, package = result_for(ReasoningOperation.ANALYZE)
+    supplied = "\n".join(item.text for item in package.items)
+    assert "PowerShell" in supplied
+    assert ENGINE.validate(
+        remap(result, parent_technique_name="PowerShell"), package
+    ).is_valid
+
+
+def test_the_corpus_supplies_the_parent_technique_for_a_sub_technique():
+    """Blocker 6 rests on this: the parent name is in the material, not invented.
+
+    Asserted against the real MITRE record rather than the fixture, because the
+    fixture writes its own chunk text and this is a claim about the corpus.
+    """
+    import json
+    from pathlib import Path
+
+    for line in Path("resources/knowledge/mitre/mitre.jsonl").open(encoding="utf-8"):
+        record = json.loads(line)
+        if record.get("sourceId") == "enterprise:T1059.001":
+            assert record["metadata"]["parentTechniqueId"] == "T1059"
+            assert (
+                "Parent Technique: Command and Scripting Interpreter (T1059)"
+                in record["text"]
+            )
+            break
+    else:
+        raise AssertionError("the T1059.001 record is missing from the corpus")
+
+
+def test_a_fabricated_parent_technique_id_is_rejected():
+    result, package = result_for(ReasoningOperation.ANALYZE)
+    report = ENGINE.validate(remap(result, parent_technique_id="T9999"), package)
+    assert ValidationCode.FABRICATED_IDENTIFIER in codes(report)
+    assert any(i.path == "mappings[0].parent_technique_id" for i in report.errors)
+
+
+def test_a_weakness_asserting_an_unsupplied_identifier_is_rejected():
+    result, package = result_for(ReasoningOperation.ANALYZE)
+    invented = dataclasses.replace(result, weaknesses=("Misses T9999 entirely.",))
+    report = ENGINE.validate(invented, package)
+    assert ValidationCode.FABRICATED_IDENTIFIER in codes(report)
+    assert any(i.path == "weaknesses[0]" for i in report.errors)
+
+
+def test_an_empty_weakness_is_rejected_as_a_missing_value():
+    result, package = result_for(ReasoningOperation.ANALYZE)
+    report = ENGINE.validate(dataclasses.replace(result, weaknesses=("  ",)), package)
+    assert ValidationCode.MISSING_VALUE in codes(report)
+
+
+def test_no_weaknesses_at_all_is_a_valid_answer():
+    result, package = result_for(ReasoningOperation.ANALYZE)
+    assert ENGINE.validate(dataclasses.replace(result, weaknesses=()), package).is_valid
+
+
+def test_every_part_of_an_evasion_risk_is_scanned():
+    result, package = result_for(ReasoningOperation.ANALYZE)
+    leaking = dataclasses.replace(
+        result,
+        evasion_risks=(
+            EvasionRisk(
+                technique="flag",
+                description="ordinary prose",
+                mitigation="api_key=AIzaSyA1234567890123456789012345678901234",
+            ),
+        ),
+    )
+    report = ENGINE.validate(leaking, package)
+    assert ValidationCode.CREDENTIAL_IN_RESULT in codes(report)
+    assert any(i.path == "evasion_risks[0].mitigation" for i in report.errors)
+
+
+def test_an_empty_evasion_risk_part_is_rejected():
+    result, package = result_for(ReasoningOperation.ANALYZE)
+    broken = dataclasses.replace(
+        result,
+        evasion_risks=(EvasionRisk(technique="", description="d", mitigation="m"),),
+    )
+    report = ENGINE.validate(broken, package)
+    assert ValidationCode.MISSING_VALUE in codes(report)
+    assert any(i.path == "evasion_risks[0].technique" for i in report.errors)
+
+
+def test_generate_notes_are_scanned_like_any_other_text():
+    result, package = result_for(ReasoningOperation.GENERATE)
+    invented = dataclasses.replace(result, notes="Follow up on T9999 coverage.")
+    report = ENGINE.validate(invented, package)
+    assert ValidationCode.FABRICATED_IDENTIFIER in codes(report)
+    assert any(i.path == "notes" for i in report.errors)
+
+
+def test_empty_generate_notes_are_accepted():
+    result, package = result_for(ReasoningOperation.GENERATE)
+    assert ENGINE.validate(dataclasses.replace(result, notes=""), package).is_valid

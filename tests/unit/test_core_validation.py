@@ -165,6 +165,8 @@ def _mitre(technique_id: str) -> dict[str, object]:
         "technique_id": technique_id,
         "technique_name": "",
         "confidence": 0.5,
+        "parent_technique_id": "",
+        "parent_technique_name": "",
     }
 
 
