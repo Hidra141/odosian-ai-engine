@@ -232,8 +232,12 @@ class StructuralChecker:
         if isinstance(result, AnalyzeResult):
             for index, value in enumerate(result.strengths):
                 required[f"strengths[{index}]"] = value
-            for index, value in enumerate(result.evasion_risks):
-                required[f"evasion_risks[{index}]"] = value
+            for index, value in enumerate(result.weaknesses):
+                required[f"weaknesses[{index}]"] = value
+            for index, risk in enumerate(result.evasion_risks):
+                required[f"evasion_risks[{index}].technique"] = risk.technique
+                required[f"evasion_risks[{index}].description"] = risk.description
+                required[f"evasion_risks[{index}].mitigation"] = risk.mitigation
         for path, value in required.items():
             if not value.strip():
                 yield _issue(ValidationCode.MISSING_VALUE, path, "required value is empty")
@@ -359,6 +363,7 @@ class EvidenceChecker:
             for field_name, value in (
                 ("tactic_name", mapping.tactic_name),
                 ("technique_name", mapping.technique_name),
+                ("parent_technique_name", mapping.parent_technique_name),
             ):
                 name = value.strip()
                 if name and not supplied.mentions(name):
@@ -608,6 +613,7 @@ class RuleIntegrityChecker:
             for name, identifier in (
                 ("technique_id", mapping.technique_id),
                 ("tactic_id", mapping.tactic_id),
+                ("parent_technique_id", mapping.parent_technique_id),
             ):
                 value = identifier.strip()
                 if value and not supplied.supplies(value):

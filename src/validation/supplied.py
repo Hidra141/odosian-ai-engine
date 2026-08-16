@@ -195,6 +195,7 @@ def claimed_identifiers(result: OperationResult) -> Iterator[tuple[str, str, Sup
         for name, identifier in (
             ("tactic_id", mapping.tactic_id),
             ("technique_id", mapping.technique_id),
+            ("parent_technique_id", mapping.parent_technique_id),
         ):
             value = identifier.strip()
             if value:
@@ -224,11 +225,16 @@ def texts(result: OperationResult) -> Iterator[tuple[str, str]]:
     for path, mapping in attack_mappings(result):
         yield f"{path}.tactic_name", mapping.tactic_name
         yield f"{path}.technique_name", mapping.technique_name
+        yield f"{path}.parent_technique_name", mapping.parent_technique_name
     if isinstance(result, AnalyzeResult):
         for index, value in enumerate(result.strengths):
             yield f"strengths[{index}]", value
-        for index, value in enumerate(result.evasion_risks):
-            yield f"evasion_risks[{index}]", value
+        for index, value in enumerate(result.weaknesses):
+            yield f"weaknesses[{index}]", value
+        for index, risk in enumerate(result.evasion_risks):
+            yield f"evasion_risks[{index}].technique", risk.technique
+            yield f"evasion_risks[{index}].description", risk.description
+            yield f"evasion_risks[{index}].mitigation", risk.mitigation
     if isinstance(result, EnhanceResult):
         yield from _rule_texts("enhanced_rule", result.enhanced_rule)
         yield "original_rule.query", result.original_rule.query
@@ -239,6 +245,7 @@ def texts(result: OperationResult) -> Iterator[tuple[str, str]]:
             yield f"changes[{index}].rationale", change.rationale
     if isinstance(result, GenerateResult):
         yield from _rule_texts("generated_rule", result.generated_rule)
+        yield "notes", result.notes
         for index, decision in enumerate(result.rationale):
             yield f"rationale[{index}].statement", decision.statement
             yield f"rationale[{index}].rationale", decision.rationale

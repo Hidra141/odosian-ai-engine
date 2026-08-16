@@ -109,6 +109,8 @@ def test_generate_carries_the_rule_its_rationale_and_its_mappings():
         "technique_id",
         "technique_name",
         "confidence",
+        "parent_technique_id",
+        "parent_technique_name",
         "support",
         "evidence",
     )

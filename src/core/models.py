@@ -154,6 +154,20 @@ class Evidence:
 
 
 @dataclass(frozen=True, slots=True)
+class EvasionRisk:
+    """One way an attacker could avoid the rule while still doing the thing.
+
+    Three parts rather than a sentence, because a route the reader cannot act
+    on is not worth reporting: what the attacker changes, why that defeats this
+    rule, and what would catch it instead.
+    """
+
+    technique: str
+    description: str
+    mitigation: str
+
+
+@dataclass(frozen=True, slots=True)
 class Uncertainty:
     """An identifier the supplied context could not settle, carried forward."""
 
@@ -212,6 +226,8 @@ class MitreMapping:
     tactic_name: str = ""
     technique_name: str = ""
     confidence: float = 0.0
+    parent_technique_id: str = ""
+    parent_technique_name: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -287,6 +303,8 @@ class MappingClaim:
     tactic_name: str = ""
     technique_name: str = ""
     confidence: float = 0.0
+    parent_technique_id: str = ""
+    parent_technique_name: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -371,7 +389,8 @@ class AnalyzeResult(ReasoningResult):
     score: int = 0
     fp_risk: FalsePositiveRisk = FalsePositiveRisk.MEDIUM
     strengths: tuple[str, ...] = ()
-    evasion_risks: tuple[str, ...] = ()
+    weaknesses: tuple[str, ...] = ()
+    evasion_risks: tuple[EvasionRisk, ...] = ()
     mappings: tuple[MappingClaim, ...] = ()
 
     def _citations(self) -> tuple[Evidence, ...]:
@@ -416,6 +435,7 @@ class GenerateResult(ReasoningResult):
     rationale: tuple[RationaleEntry, ...]
     mappings: tuple[MappingClaim, ...]
     score: int = 0
+    notes: str = ""
 
     def _citations(self) -> tuple[Evidence, ...]:
         """Return the citations of the findings, the rationale and the mappings.

@@ -37,6 +37,7 @@ from .models import (
     AnalyzeResult,
     DetectionRuleDraft,
     EnhanceResult,
+    EvasionRisk,
     Evidence,
     Finding,
     GenerateResult,
@@ -124,7 +125,10 @@ class ResponseParser:
                     score=_integer(document, "score"),
                     fp_risk=FalsePositiveRisk(_text(document, "fp_risk")),
                     strengths=_strings(document, "strengths"),
-                    evasion_risks=_strings(document, "evasion_risks"),
+                    weaknesses=_strings(document, "weaknesses"),
+                    evasion_risks=tuple(
+                        _evasion_risk(entry) for entry in _objects(document, "evasion_risks")
+                    ),
                     mappings=tuple(_mapping(entry) for entry in _objects(document, "mappings")),
                 )
             case ReasoningOperation.ENHANCE:
@@ -143,7 +147,17 @@ class ResponseParser:
                     ),
                     mappings=tuple(_mapping(entry) for entry in _objects(document, "mappings")),
                     score=_integer(document, "score"),
+                    notes=_text(document, "notes"),
                 )
+
+
+def _evasion_risk(entry: JSONObject) -> EvasionRisk:
+    """Build one evasion route."""
+    return EvasionRisk(
+        technique=_text(entry, "technique"),
+        description=_text(entry, "description"),
+        mitigation=_text(entry, "mitigation"),
+    )
 
 
 def _finding(entry: JSONObject) -> Finding:
@@ -220,6 +234,8 @@ def _mitre(entry: JSONObject) -> MitreMapping:
         tactic_name=_text(entry, "tactic_name"),
         technique_name=_text(entry, "technique_name"),
         confidence=_number(entry, "confidence"),
+        parent_technique_id=_text(entry, "parent_technique_id"),
+        parent_technique_name=_text(entry, "parent_technique_name"),
     )
 
 
@@ -267,6 +283,8 @@ def _mapping(entry: JSONObject) -> MappingClaim:
         tactic_name=_text(entry, "tactic_name"),
         technique_name=_text(entry, "technique_name"),
         confidence=_number(entry, "confidence"),
+        parent_technique_id=_text(entry, "parent_technique_id"),
+        parent_technique_name=_text(entry, "parent_technique_name"),
     )
 
 
