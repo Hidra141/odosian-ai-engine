@@ -56,6 +56,14 @@ class FieldSpec:
     model to return an empty array or an empty object where it has no value, and
     never ``null``, so optionality is expressed by ``allow_empty`` rather than by
     letting a field disappear.
+
+    ``allow_multiline`` is the single exception to the one-line rule that the
+    output contract otherwise applies to every string. It is opt-in per field
+    and defaults off, so a field that has not asked for line breaks is still
+    refused them. Only a field whose value is code has any business carrying
+    one: a query fragment of more than a couple of clauses is written across
+    lines by every tool that produces one, and a model asked for such a fragment
+    returns it that way whatever the instruction says.
     """
 
     name: str
@@ -66,6 +74,7 @@ class FieldSpec:
     minimum: float | None = None
     maximum: float | None = None
     allow_empty: bool = False
+    allow_multiline: bool = False
     min_items: int = 0
     spec: ObjectSpec | None = None
 
@@ -79,6 +88,8 @@ class FieldSpec:
             raise ValueError(f"field {self.name!r} may only enumerate string values")
         if self.const and self.kind is not FieldKind.STRING:
             raise ValueError(f"field {self.name!r} may only fix a string value")
+        if self.allow_multiline and self.kind is not FieldKind.STRING:
+            raise ValueError(f"field {self.name!r} may only relax line breaks on a string")
 
     @property
     def constraint_text(self) -> str:
@@ -180,7 +191,7 @@ class SchemaValidator:
         if not isinstance(value, str):
             yield SchemaIssue(path, f"expected a string, got {_type_name(value)}")
             return
-        if "\n" in value or "\r" in value:
+        if ("\n" in value or "\r" in value) and not declared.allow_multiline:
             yield SchemaIssue(path, "string must be a single line")
         if declared.const and value != declared.const:
             yield SchemaIssue(path, f"expected {declared.const!r}, got {value!r}")

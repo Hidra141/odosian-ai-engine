@@ -55,6 +55,9 @@ from .uncertainty import UncertainIdentifier, uncertain_identifiers
 
 _WHITESPACE: Final[re.Pattern[str]] = re.compile(r"\s+")
 
+_QUOTES: Final[str] = "\"'"
+"""The characters that open a literal in the query languages the engine reads."""
+
 
 @dataclass(frozen=True, slots=True)
 class ReasoningIssue:
@@ -443,8 +446,59 @@ def _duplicates(check: str, values: Sequence[str]) -> Iterator[ReasoningIssue]:
 
 
 def _normalise(text: str) -> str:
-    """Return text with runs of whitespace collapsed, for comparison only."""
-    return _WHITESPACE.sub(" ", text).strip()
+    r"""Return a query in the form two spellings of it can be compared in.
+
+    Comparison only. Neither the supplied rule nor the model's answer is
+    altered by this; it decides whether two renderings of one query are the
+    same query.
+
+    Two kinds of whitespace are insignificant. Runs of it stand for a single
+    space, so a query written across several lines compares equal to the same
+    query on one — which is how most Elastic rules are written and how a model
+    repeats them back. Padding immediately inside a parenthesis is insignificant
+    too: ``source.ip:( 10.0.0.0/8 )`` and ``source.ip:(10.0.0.0/8)`` select the
+    same events. The two rules meet in exactly the case that prompted this:
+    collapsing an indented ``(\\n    10.0.0.0/8\\n  )`` leaves ``( 10.0.0.0/8 )``,
+    while a reader flattening the same query by hand writes ``(10.0.0.0/8)``.
+
+    Nothing else is touched. Whitespace elsewhere is left alone, because the
+    space between two terms can be the difference between one clause and two,
+    and text inside quotes is left exactly as written: a literal is what the
+    rule matches on, and ``"a ( b )"`` does not match what ``"a (b)"`` matches.
+    """
+    return _unpadded(_WHITESPACE.sub(" ", text).strip())
+
+
+def _unpadded(text: str) -> str:
+    """Return the text with padding inside parentheses removed, quotes intact.
+
+    A single pass that tracks whether it is inside a quoted literal, so the
+    rewriting stops at the opening quote and resumes after the closing one. A
+    backslash inside a literal takes the character after it verbatim, which
+    keeps an escaped quote from ending the literal early.
+    """
+    out: list[str] = []
+    quote: str | None = None
+    index = 0
+    while index < len(text):
+        char = text[index]
+        index += 1
+        if quote is not None:
+            out.append(char)
+            if char == "\\" and index < len(text):
+                out.append(text[index])
+                index += 1
+            elif char == quote:
+                quote = None
+            continue
+        if char in _QUOTES:
+            quote = char
+        elif char == " " and out and out[-1] == "(":
+            continue
+        elif char == ")" and out and out[-1] == " ":
+            out.pop()
+        out.append(char)
+    return "".join(out)
 
 
 _RESULT_TYPES: Final[Mapping[ReasoningOperation, type[OperationResult]]] = MappingProxyType(

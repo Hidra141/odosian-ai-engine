@@ -7,6 +7,7 @@ supplied material, and references that must hold inside the response.
 from __future__ import annotations
 
 import copy
+import dataclasses
 
 import pytest
 
@@ -151,6 +152,102 @@ def test_an_enhanced_rule_identical_to_the_original_is_rejected():
     payload = fixtures.enhance_response(package)
     payload["enhanced_rule"]["query"] = fixtures.RULE_QUERY
     assert "rule_unchanged" in checks(_validate(payload, package, ReasoningOperation.ENHANCE))
+
+
+# the original query, compared across the ways one query can be written
+
+
+REAL_MULTI_LINE_QUERY = (
+    "event.category:(network or network_traffic) and network.transport:tcp and\n"
+    "  source.ip:(\n"
+    "    10.0.0.0/8 or\n"
+    "    172.16.0.0/12 or\n"
+    "    192.168.0.0/16\n"
+    "  )"
+)
+"""The shape a real Elastic rule states its query in, indented across lines."""
+
+REAL_FLATTENED_QUERY = (
+    "event.category:(network or network_traffic) and network.transport:tcp and "
+    "source.ip:(10.0.0.0/8 or 172.16.0.0/12 or 192.168.0.0/16)"
+)
+"""The same query as a model repeated it back: one line, no padding.
+
+Taken from a real ``gemini-3.5-flash`` enhancement of Elastic rule
+``87ec6396-9ac4-4706-bcf0-2ebb22002f43``. Collapsing the indentation alone
+leaves ``( 10.0.0.0/8 … )``, while the model wrote ``(10.0.0.0/8 …)``, and the
+two were held to be different queries.
+"""
+
+
+def enhance_with_queries(original: str, supplied: str, enhanced: str | None = None):
+    """Return the outcome of validating one enhancement of a stated query."""
+    rule = dataclasses.replace(fixtures.rule_context(), query=supplied)
+    package = fixtures.context_package(ContextOperation.ENHANCE, rule=rule)
+    payload = fixtures.enhance_response(package)
+    payload["original_rule"]["query"] = original
+    if enhanced is not None:
+        payload["enhanced_rule"]["query"] = enhanced
+    return _validate(payload, package, ReasoningOperation.ENHANCE)
+
+
+def test_the_real_flattened_query_reproduces_the_multi_line_original():
+    """The exact comparison that failed against the live model."""
+    outcome = enhance_with_queries(REAL_FLATTENED_QUERY, REAL_MULTI_LINE_QUERY)
+    assert "original_rule_altered" not in checks(outcome)
+
+
+def test_padding_inside_parentheses_is_not_a_change():
+    outcome = enhance_with_queries(
+        "process.name:(powershell.exe)", "process.name:( powershell.exe )"
+    )
+    assert "original_rule_altered" not in checks(outcome)
+
+
+def test_padding_added_rather_than_removed_is_not_a_change_either():
+    outcome = enhance_with_queries(
+        "process.name:( powershell.exe )", "process.name:(powershell.exe)"
+    )
+    assert "original_rule_altered" not in checks(outcome)
+
+
+def test_a_query_flattened_onto_one_line_is_not_a_change():
+    outcome = enhance_with_queries(
+        "process.name:powershell.exe or process.name:cmd.exe",
+        "process.name:powershell.exe or\n  process.name:cmd.exe",
+    )
+    assert "original_rule_altered" not in checks(outcome)
+
+
+@pytest.mark.parametrize(
+    ("original", "supplied"),
+    [
+        ("process.name:cmd.exe", "process.name:powershell.exe"),
+        ("process.name:(cmd.exe)", "process.name:(powershell.exe)"),
+        ("process.name:(a or b)", "process.name:(a or c)"),
+        ("process.name:a and process.args:b", "process.name:a or process.args:b"),
+        ("process.name:(a)", "process.name:(a or b)"),
+        ('process.command_line:"a (b)"', 'process.command_line:"a ( b )"'),
+    ],
+)
+def test_a_genuinely_different_query_is_still_rejected(original, supplied):
+    """Padding is insignificant between terms and significant inside a literal."""
+    outcome = enhance_with_queries(original, supplied)
+    assert "original_rule_altered" in checks(outcome)
+
+
+def test_a_term_separating_space_is_never_removed():
+    """Collapsing 'a or b' into 'a orb' would be a different query, not a format."""
+    outcome = enhance_with_queries("process.name:(a orb)", "process.name:(a or b)")
+    assert "original_rule_altered" in checks(outcome)
+
+
+def test_reformatting_the_query_alone_still_counts_as_no_rewrite():
+    """An enhancement that only re-spaces the original has not rewritten it."""
+    outcome = enhance_with_queries(
+        REAL_FLATTENED_QUERY, REAL_MULTI_LINE_QUERY, enhanced=REAL_FLATTENED_QUERY
+    )
+    assert "rule_unchanged" in checks(outcome)
 
 
 def _mitre(technique_id: str) -> dict[str, object]:

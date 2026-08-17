@@ -25,7 +25,7 @@ from pathlib import Path
 
 import pytest
 
-from src.application.pipeline import Pipeline
+from src.application.pipeline import Pipeline, parsed_rule_from_query
 from src.application.requests import EngineRequest
 from src.application.retrieval import DEFAULT_SETTINGS, RetrievalService
 from src.application.runtime import RuntimeFactory
@@ -72,6 +72,9 @@ package with no MITRE material for a response to cite. A rule that names its
 technique is what makes the identifier route observable at all.
 """
 
+RAW_QUERY = 'process.name:"powershell.exe" and process.command_line:*-enc*'
+"""A query as a caller would paste it, with no rule document around it."""
+
 REQUIREMENT = (
     "Detect encoded PowerShell command execution on Windows endpoints, "
     "covering ATT&CK technique T1059.001."
@@ -108,6 +111,32 @@ def runtime_factory() -> RuntimeFactory:
     )
 
 
+ENHANCE_RULE_TEXT = json.dumps(
+    {
+        "name": "Suspicious PowerShell Encoded Command",
+        "rule_id": "8a1f2c34-0000-4c11-9f00-2b7a5c9e1234",
+        "type": "query",
+        "language": "kuery",
+        "query": 'process.name:"powershell.exe" and process.command_line:*-enc*',
+        "index": ["logs-endpoint.events.process-*"],
+        "tags": ["attack.execution", "attack.t1059.001"],
+        "severity": "medium",
+    }
+)
+"""The same detection, in a format that states a query.
+
+Enhance reports the original query beside the rewrite, so it refuses a rule
+whose format states none. The Sigma rule above is kept for analyze, which reads
+it perfectly well; enhance is given this one. The technique tag is carried over
+so both operations seed retrieval identically and stay comparable.
+"""
+
+RULE_TEXT_FOR = {
+    ReasoningOperation.ANALYZE: RULE_TEXT,
+    ReasoningOperation.ENHANCE: ENHANCE_RULE_TEXT,
+}
+
+
 def prepared(operation: ReasoningOperation, service: RetrievalService):
     """Return the package the pipeline is expected to build, over real retrieval."""
     if operation is ReasoningOperation.GENERATE:
@@ -118,7 +147,7 @@ def prepared(operation: ReasoningOperation, service: RetrievalService):
             mappings=None,
             retrieval=service.for_requirement(REQUIREMENT),
         )
-    parsed = RuleParser().parse(RULE_TEXT)
+    parsed = RuleParser().parse(RULE_TEXT_FOR[operation])
     entities = EntityExtractor().extract(parsed)
     mappings = EntityMapper().map(entities)
     rule = rule_context_from_parsed(parsed)
@@ -136,13 +165,28 @@ def request_for(operation: ReasoningOperation) -> EngineRequest:
     if operation is ReasoningOperation.GENERATE:
         return EngineRequest(operation, user_id=USER, requirement=REQUIREMENT)
     return EngineRequest(
-        operation, user_id=USER, rule_text=RULE_TEXT, rule_id=RULE_ID
+        operation, user_id=USER, rule_text=RULE_TEXT_FOR[operation], rule_id=RULE_ID
     )
+
+
+def response_for(operation: ReasoningOperation, package):
+    """Return the canned answer for one operation, aligned with the rule it used."""
+    body = RESPONSES[operation](package)
+    if operation is ReasoningOperation.ENHANCE:
+        rule = package.rule_context
+        # Stage-15 refuses an original_rule that does not reproduce the supplied query.
+        body["original_rule"] = {
+            "identifier": rule.identifier,
+            "title": rule.title,
+            "language": rule.language,
+            "query": rule.query,
+        }
+    return body
 
 
 def pipeline_for(operation: ReasoningOperation, service: RetrievalService):
     """Return a pipeline over real retrieval, answering with a fake provider."""
-    provider = fixtures.provider_returning([RESPONSES[operation](prepared(operation, service))])
+    provider = fixtures.provider_returning([response_for(operation, prepared(operation, service))])
     return Pipeline(
         engine=fixtures.engine_of(provider),
         retrieval=service,
@@ -240,6 +284,47 @@ def test_the_real_package_carries_evidence_drawn_from_the_real_corpus(retrieval)
     assert package.provenance is not None
     assert package.provenance.retrieval_items > 0
     assert package.provenance.sources_present
+
+
+def test_a_raw_query_reaches_the_real_corpus_on_its_text_alone(retrieval):
+    """The Raw Query mode against real retrieval, with no rule document on the path.
+
+    The provider leg is not exercised here, and deliberately so. A bare query
+    naming no technique retrieves no ATT&CK record, so the shared fixture
+    response — which cites one — could not be grounded against this package.
+    Forcing a technique into the query to make the fixture fit would be testing
+    a query no caller would paste. The contract document for a raw query is
+    covered in the unit suite instead; what is proved here is the part that had
+    never run: a query, with nothing parsed, reaching the real indexes.
+    """
+    request = EngineRequest(
+        ReasoningOperation.ANALYZE,
+        user_id=USER,
+        query=RAW_QUERY,
+        language="kuery",
+    )
+    parsed = parsed_rule_from_query(request)
+    entities = EntityExtractor().extract(parsed)
+    mappings = EntityMapper().map(entities)
+    rule = rule_context_from_parsed(parsed)
+
+    assert entities.entities, "the query must yield entities without a parser"
+    assert mappings.resolved == (), "nothing resolves from a bare query, and none is invented"
+
+    found = retrieval.for_rule(rule, mappings)
+    assert len(found) > 0, "the lexical route must still retrieve from the real corpus"
+
+    package = ContextBuilder().build(
+        ReasoningOperation.ANALYZE.context_operation,
+        rule=rule,
+        entities=entities,
+        mappings=mappings,
+        retrieval=found,
+    )
+    ContextValidator().validate(package).raise_if_invalid()
+    assert package.provenance is not None
+    assert package.provenance.retrieval_items > 0
+    assert package.rule_context.query == RAW_QUERY
 
 
 def test_no_uncertainty_or_citation_leaks_into_the_document(retrieval):

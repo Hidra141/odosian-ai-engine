@@ -14,12 +14,13 @@ accepted by any test that only looked for the fields it expected.
 from __future__ import annotations
 
 import dataclasses
+import json
 
 import pytest
 
 from src.context.types import ContextOperation
-from src.core.models import AnalyzeRequest, EnhanceRequest, GenerateRequest
-from src.core.types import ReasoningOperation
+from src.core.models import AnalyzeRequest, EnhanceRequest, GenerateRequest, RuleChange
+from src.core.types import ChangeCategory, ReasoningOperation, SupportLevel
 from src.formatter import (
     OperationMismatchError,
     RuntimeContext,
@@ -180,6 +181,99 @@ def test_enhance_changelog_pairs_a_derived_label_with_the_model_reason():
     assert entry["reason"] == result.changes[0].rationale
 
 
+def _rule_change(change_id: str, before: str, after: str, rationale: str) -> RuleChange:
+    """Return one change, carrying the fields the contract never renders."""
+    return RuleChange(
+        change_id=change_id,
+        category=ChangeCategory.EVASION_RESISTANCE,
+        before=before,
+        after=after,
+        rationale=rationale,
+        addresses=("F1",),
+        evidence=(),
+        support=SupportLevel.PARTIALLY_SUPPORTED,
+    )
+
+
+def enhance_with_changes(*changes: RuleChange):
+    """Return an enhance result carrying exactly the changes given."""
+    result, _ = result_for(ReasoningOperation.ENHANCE)
+    return dataclasses.replace(result, changes=changes)
+
+
+def test_enhance_changelog_derives_each_of_the_three_shapes_the_spec_states():
+    """Stage-15 defines the shapes by what it permits to be empty.
+
+    ``before`` is empty where a change adds something the original lacked,
+    ``after`` where it removes something. The label is read off that convention
+    rather than written by a model.
+    """
+    result = enhance_with_changes(
+        _rule_change("C1", "", "process.parent.name : *", "adds the missing anchor"),
+        _rule_change("C2", "process.args : *", "", "removes the noisy clause"),
+        _rule_change("C3", "*-enc*", "(*-enc* or *-e *)", "widens the flag match"),
+    )
+    changelog = format_enhance(result, RUNTIME)["analysis"]["changelog"]
+    assert [entry["change"] for entry in changelog] == [
+        "Added process.parent.name : *",
+        "Removed process.args : *",
+        "Changed *-enc* to (*-enc* or *-e *)",
+    ]
+
+
+def test_enhance_changelog_keeps_every_entry_in_the_order_the_result_states():
+    result = enhance_with_changes(
+        _rule_change("C1", "a", "b", "first"),
+        _rule_change("C2", "c", "d", "second"),
+        _rule_change("C3", "e", "f", "third"),
+    )
+    changelog = format_enhance(result, RUNTIME)["analysis"]["changelog"]
+    assert len(changelog) == 3
+    assert [entry["reason"] for entry in changelog] == ["first", "second", "third"]
+
+
+def test_every_changelog_reason_is_the_model_rationale_verbatim():
+    result = enhance_with_changes(
+        _rule_change("C1", "a", "b", "the supplied material lists three spellings"),
+        _rule_change("C2", "", "c", "the original carried no parent anchor"),
+    )
+    changelog = format_enhance(result, RUNTIME)["analysis"]["changelog"]
+    assert [entry["reason"] for entry in changelog] == [
+        change.rationale for change in result.changes
+    ]
+
+
+def test_the_changelog_is_deterministic_over_one_result():
+    result = enhance_with_changes(
+        _rule_change("C1", "a", "b", "first"),
+        _rule_change("C2", "", "c", "second"),
+    )
+    first = format_enhance(result, RUNTIME)["analysis"]["changelog"]
+    second = format_enhance(result, RUNTIME)["analysis"]["changelog"]
+    assert first == second
+
+
+def test_no_internal_change_field_reaches_the_changelog():
+    """change_id, category, addresses, evidence and support stay inside the engine."""
+    result = enhance_with_changes(_rule_change("C1", "a", "b", "why"))
+    entries = format_enhance(result, RUNTIME)["analysis"]["changelog"]
+    for entry in entries:
+        assert list(entry) == ["change", "reason"]
+    encoded = json.dumps(entries)
+    for leaked in (
+        "change_id",
+        "C1",
+        "category",
+        "evasion_resistance",
+        "addresses",
+        "support",
+        "partially_supported",
+        "evidence",
+        "rationale",
+    ):
+        assert leaked not in encoded
+
+
 def test_enhance_keeps_its_mappings_under_the_new_mapping_name():
     result, _ = result_for(ReasoningOperation.ENHANCE)
     analysis = format_enhance(result, RUNTIME)["analysis"]
@@ -278,6 +372,97 @@ def test_generate_receives_no_field_owned_by_another_operation():
     result, _ = result_for(ReasoningOperation.GENERATE)
     keys = set(format_generate(result, RUNTIME)["analysis"])
     assert not keys & (ANALYZE_ONLY | ENHANCE_ONLY)
+
+
+# investigation guide
+
+
+STRUCTURED_GUIDE = (
+    "## Overview\n"
+    "Repeated denied model access in Bedrock.\n\n"
+    "## Triage Steps\n"
+    "1. **Identify the implicated user** — review `user.id`.\n"
+    "2. **Check identity type** — human, assumed role or service account.\n\n"
+    "## True Positive Indicators\n"
+    "- Denials span multiple distinct model IDs\n\n"
+    "## False Positive Indicators\n"
+    "- Known CI/CD pipeline account\n\n"
+    "## Response Actions\n"
+    "1. **Contain** — suspend the implicated identity.\n\n"
+    "## Related Rules\n"
+    "- AWS Bedrock Successful Model Invocation by Denied User\n"
+)
+"""A guide with the structure the contract's example demonstrates.
+
+Used to prove the value survives the formatter unaltered. The engine does not
+require this structure and does not produce it; what is under test is that a
+guide of any shape reaches the contract exactly as the model wrote it.
+"""
+
+
+def _with_guide(result, guide: str):
+    """Return the result with its produced rule carrying the stated guide."""
+    field_name = "enhanced_rule" if hasattr(result, "enhanced_rule") else "generated_rule"
+    rule = dataclasses.replace(getattr(result, field_name), investigation_guide=guide)
+    return dataclasses.replace(result, **{field_name: rule})
+
+
+def test_enhance_passes_the_investigation_guide_through_verbatim():
+    result, _ = result_for(ReasoningOperation.ENHANCE)
+    analysis = format_enhance(result, RUNTIME)["analysis"]
+    assert analysis["investigationGuide"] == result.enhanced_rule.investigation_guide
+    assert analysis["investigationGuide"].strip()
+
+
+def test_generate_passes_the_investigation_guide_through_verbatim():
+    result, _ = result_for(ReasoningOperation.GENERATE)
+    analysis = format_generate(result, RUNTIME)["analysis"]
+    assert analysis["investigationGuide"] == result.generated_rule.investigation_guide
+    assert analysis["investigationGuide"].strip()
+
+
+@pytest.mark.parametrize(
+    ("operation", "formatter"),
+    [
+        (ReasoningOperation.ENHANCE, format_enhance),
+        (ReasoningOperation.GENERATE, format_generate),
+    ],
+    ids=("enhance", "generate"),
+)
+def test_a_structured_guide_survives_the_formatter_unaltered(operation, formatter):
+    """Markdown, newlines and headings are content; the formatter rewrites none of it."""
+    result, _ = result_for(operation)
+    document = formatter(_with_guide(result, STRUCTURED_GUIDE), RUNTIME)
+    assert document["analysis"]["investigationGuide"] == STRUCTURED_GUIDE
+
+
+@pytest.mark.parametrize(
+    ("operation", "formatter"),
+    [
+        (ReasoningOperation.ENHANCE, format_enhance),
+        (ReasoningOperation.GENERATE, format_generate),
+    ],
+    ids=("enhance", "generate"),
+)
+def test_a_terse_guide_is_never_padded_into_a_structured_one(operation, formatter):
+    """The formatter must not pretend a guide the engine did not produce."""
+    terse = "Decode the base64 argument and review the parent process."
+    result, _ = result_for(operation)
+    document = formatter(_with_guide(result, terse), RUNTIME)
+    assert document["analysis"]["investigationGuide"] == terse
+    assert "## " not in document["analysis"]["investigationGuide"]
+
+
+def test_a_structured_guide_survives_json_encoding():
+    result, _ = result_for(ReasoningOperation.ENHANCE)
+    document = format_enhance(_with_guide(result, STRUCTURED_GUIDE), RUNTIME)
+    assert json.loads(json.dumps(document)) == document
+
+
+def test_analyze_carries_no_investigation_guide():
+    """The field belongs to the two operations that produce a rule."""
+    result, _ = result_for(ReasoningOperation.ANALYZE)
+    assert "investigationGuide" not in format_analyze(result, RUNTIME)["analysis"]
 
 
 def test_no_internal_field_name_survives_into_any_document():

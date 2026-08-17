@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import dataclasses
 
+from src.application.pipeline import parsed_rule_from_query
+from src.application.requests import EngineRequest
 from src.application.retrieval import (
     DEFAULT_SETTINGS,
     RetrievalService,
@@ -20,6 +22,7 @@ from src.application.retrieval import (
     rule_query,
 )
 from src.context.context_builder import rule_context_from_parsed
+from src.core.types import ReasoningOperation
 from src.entities.extractor import EntityExtractor
 from src.graphrag.config import GraphRagSettings
 from src.graphrag.models import RetrievalQuery, RetrievalResult
@@ -29,6 +32,7 @@ from src.parser.parser import RuleParser
 from tests.fixtures import stage15 as fixtures
 
 REQUIREMENT = "Detect encoded PowerShell command execution on Windows endpoints."
+RAW_QUERY = 'process.name:"powershell.exe" and process.command_line:*-enc*'
 
 
 def mapped():
@@ -153,6 +157,39 @@ def test_the_service_returns_what_the_retriever_answered():
     result = fixtures.retrieval_result()
     service = RetrievalService.of(RecordingRetriever(result))
     assert service.for_requirement(REQUIREMENT) is result
+
+
+def test_a_raw_query_seeds_retrieval_with_its_text_and_nothing_resolved():
+    """Nothing resolves from a bare query, so the lexical route carries it alone."""
+    parsed = parsed_rule_from_query(
+        EngineRequest(
+            ReasoningOperation.ANALYZE,
+            user_id="u",
+            query=RAW_QUERY,
+            language="kuery",
+        )
+    )
+    mappings = EntityMapper().map(EntityExtractor().extract(parsed))
+    query = rule_query(rule_context_from_parsed(parsed), mappings, top_k=10)
+    assert query.text == RAW_QUERY
+    assert (query.entity_ids, query.canonical_fields) == ((), ())
+    assert not query.is_empty
+
+
+def test_an_unresolved_mapping_never_becomes_a_retrieval_seed():
+    """Unresolved entities carry canonical_field='query'; it must not be seeded."""
+    parsed = parsed_rule_from_query(
+        EngineRequest(
+            ReasoningOperation.ANALYZE,
+            user_id="u",
+            query=RAW_QUERY,
+            language="kuery",
+        )
+    )
+    mappings = EntityMapper().map(EntityExtractor().extract(parsed))
+    assert any(item.canonical_field == "query" for item in mappings.unresolved)
+    query = rule_query(rule_context_from_parsed(parsed), mappings, top_k=10)
+    assert "query" not in query.canonical_fields
 
 
 def test_the_default_settings_are_stage_thirteen_own():

@@ -243,12 +243,15 @@ RECOMMENDATION_SPEC: Final[ObjectSpec] = ObjectSpec(
             name="code_snippet",
             kind=FieldKind.STRING,
             description=(
-                "The query fragment that applies this recommendation, on a single line. It "
-                "may reference only fields and values the supplied material confirms, and may "
-                "introduce no identifier the supplied material does not carry. Empty string "
-                "where the change cannot be expressed as a fragment."
+                "The query fragment that applies this recommendation. It may reference only "
+                "fields and values the supplied material confirms, and may introduce no "
+                "identifier the supplied material does not carry. Empty string where the "
+                "change cannot be expressed as a fragment. This is the one field that may "
+                "run to several lines: a fragment of more than a clause or two is written "
+                "that way by every tool that produces one."
             ),
             allow_empty=True,
+            allow_multiline=True,
         ),
     ),
 )

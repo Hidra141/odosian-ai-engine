@@ -58,6 +58,20 @@ from .supplied import (
 )
 from .types import IssueSeverity, ValidationCode
 
+MULTILINE_PERMITTED: Final[tuple[str, ...]] = (".code_snippet",)
+"""The paths the one-line rule does not apply to.
+
+Stated as a closed list of path endings rather than as a flag a caller could
+pass, so widening it is a visible edit here and cannot happen by accident.
+Stage-15 declares the same exception on the field itself
+(:attr:`~src.core.schema.FieldSpec.allow_multiline`); the two must agree, or a
+value one layer admits the next would refuse.
+
+Only a code fragment qualifies. Every other free-text value the engine returns
+is prose or an identifier, and a line break in either is a formatting artefact
+rather than content.
+"""
+
 _WHITESPACE: Final[re.Pattern[str]] = re.compile(r"\s+")
 _URL: Final[re.Pattern[str]] = re.compile(r"https?://[^\s\"'<>)\]]+")
 
@@ -242,6 +256,8 @@ class StructuralChecker:
             if not value.strip():
                 yield _issue(ValidationCode.MISSING_VALUE, path, "required value is empty")
         for path, value in texts(result):
+            if path.endswith(MULTILINE_PERMITTED):
+                continue
             if "\n" in value or "\r" in value:
                 yield _issue(
                     ValidationCode.MULTILINE_STRING,
