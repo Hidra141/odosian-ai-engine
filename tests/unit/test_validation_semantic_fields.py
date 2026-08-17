@@ -142,10 +142,90 @@ def test_a_fabricated_identifier_in_a_code_snippet_is_rejected():
     assert "T9999" in str(report.errors[0])
 
 
-def test_a_multiline_code_snippet_is_rejected():
+def test_a_multiline_code_snippet_is_accepted():
+    """A fragment of any size is written across lines by the tools that produce one.
+
+    This replaces an assertion that required the opposite. That rule was not the
+    contract's — the contract states no shape for ``codeSnippet`` at all, and the
+    running product renders multi-line fragments — it was the output envelope's
+    one-line rule applied to a field holding code. A real model returned a
+    multi-line fragment for a rule that had twice been analysed successfully, and
+    the response was refused before any check on its content ran.
+    """
     result, package = result_for(ReasoningOperation.ANALYZE)
-    broken = resnip(result, "process.name:*\nand process.args:*")
+    accepted = resnip(result, "process.name:*\nand process.args:*")
+    report = ENGINE.validate(accepted, package)
+    assert ValidationCode.MULTILINE_STRING not in codes(report)
+    assert report.is_valid
+
+
+def test_the_relaxation_reaches_no_field_but_the_code_fragment():
+    """Every other free-text value still owes the contract one line."""
+    result, package = result_for(ReasoningOperation.ANALYZE)
+    broken = dataclasses.replace(result, summary="one\ntwo")
     assert ValidationCode.MULTILINE_STRING in codes(ENGINE.validate(broken, package))
+
+    first = dataclasses.replace(result.findings[0], statement="one\ntwo")
+    spread = dataclasses.replace(result, findings=(first, *result.findings[1:]))
+    assert ValidationCode.MULTILINE_STRING in codes(ENGINE.validate(spread, package))
+
+
+@pytest.mark.parametrize("field", ["query", "investigation_guide", "title"])
+def test_a_produced_rule_still_owes_one_line(field):
+    """The rule a generation writes is held to the envelope, fragment or not."""
+    result, package = result_for(ReasoningOperation.GENERATE)
+    rule = dataclasses.replace(result.generated_rule, **{field: "one\ntwo"})
+    broken = dataclasses.replace(result, generated_rule=rule)
+    assert ValidationCode.MULTILINE_STRING in codes(ENGINE.validate(broken, package))
+
+
+@pytest.mark.parametrize("field", ["before", "after"])
+def test_an_enhancement_change_still_owes_one_line(field):
+    """D-3.2 compares these two after collapsing whitespace; they must stay one line."""
+    result, package = result_for(ReasoningOperation.ENHANCE)
+    change = dataclasses.replace(result.changes[0], **{field: "one\ntwo"})
+    broken = dataclasses.replace(result, changes=(change, *result.changes[1:]))
+    assert ValidationCode.MULTILINE_STRING in codes(ENGINE.validate(broken, package))
+
+
+def test_an_enhancement_original_query_still_owes_one_line():
+    result, package = result_for(ReasoningOperation.ENHANCE)
+    original = dataclasses.replace(result.original_rule, query="one\ntwo")
+    broken = dataclasses.replace(result, original_rule=original)
+    assert ValidationCode.MULTILINE_STRING in codes(ENGINE.validate(broken, package))
+
+
+def test_a_multiline_code_snippet_still_faces_every_other_check():
+    """Relaxing the line rule relaxes nothing else."""
+    result, package = result_for(ReasoningOperation.ANALYZE)
+    secret = "AIzaSyA1234567890123456789012345678901234"
+    leaking = resnip(result, f"process.name:*\nand api_key={secret}")
+    assert ValidationCode.CREDENTIAL_IN_RESULT in codes(ENGINE.validate(leaking, package))
+
+    invented = resnip(result, "process.name:*\nand threat.technique.id:'T9999'")
+    assert ValidationCode.FABRICATED_IDENTIFIER in codes(ENGINE.validate(invented, package))
+
+
+def test_only_the_code_fragment_declares_the_relaxation():
+    """One field opts in; nothing else in any operation's spec does."""
+    from src.core.output_format import spec_for
+    from src.core.schema import FieldKind, ObjectSpec
+
+    def relaxed(spec: ObjectSpec, prefix: str = "") -> list[str]:
+        found: list[str] = []
+        for field in spec.fields:
+            path = f"{prefix}{field.name}"
+            if field.allow_multiline:
+                found.append(path)
+            if field.spec is not None and field.kind in {
+                FieldKind.OBJECT,
+                FieldKind.OBJECT_ARRAY,
+            }:
+                found.extend(relaxed(field.spec, f"{path}."))
+        return found
+
+    for operation in ReasoningOperation:
+        assert relaxed(spec_for(operation)) in ([], ["recommendations.code_snippet"])
 
 
 def test_an_empty_code_snippet_is_allowed():
