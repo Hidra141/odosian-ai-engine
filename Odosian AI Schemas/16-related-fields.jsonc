@@ -1,0 +1,57 @@
+// ============================================================================
+// RELATED FIELDS — index/indexPatterns and requiredFields
+// ============================================================================
+// WHAT: Two fields that are easy to get wrong if you're consuming these
+// schemas from outside the codebase — documented in detail here.
+// ============================================================================
+
+{
+  // --------------------------------------------------------------------
+  // GOTCHA #1: "index" (on the saved Rule) vs "indexPatterns" (in AI results)
+  // --------------------------------------------------------------------
+  "index_vs_indexPatterns": {
+    "onTheRuleModel": "There is NO 'indexPatterns' column on the Rule table. The real Prisma field is Rule.index — a single free-text STRING column (max 500 chars), storing a comma-and-space-separated list as ONE string.",
+    "ruleIndexExample": "\"winlogbeat-*, logs-endpoint.events.*\"",
+
+    "onAIResults": "'indexPatterns' as an ARRAY OF STRINGS only exists INSIDE AI result payloads — EnhanceResult.indexPatterns and GenerateResult.indexPatterns. It does not exist as a Rule column name.",
+    "aiResultExample": ["winlogbeat-*", "logs-endpoint.events.*"],
+
+    "conversionRule": "When an AI result is persisted to a Rule, the array is joined with .join(\", \") into the single Rule.index string. If YOUR system produces indexPatterns as an array, join it before writing to Rule.index directly. If you read Rule.index back out, split(\",\").map(s => s.trim()) to get an array again."
+  },
+
+  // --------------------------------------------------------------------
+  // GOTCHA #2: requiredFields is DERIVED, never manually entered / never trusted from storage
+  // --------------------------------------------------------------------
+  "requiredFields": {
+    "purpose": "A list of ECS field names the query actually references, sent to Elastic as 'required_fields' metadata on push.",
+
+    "computedFreshEveryTime": "This is recalculated LIVE from the CURRENT query text at every push, via deriveRequiredFields(rule.query). The stored Rule.requiredFields DB column is NEVER trusted as the source of truth — this guarantees it always matches what the rule's query currently does, even if someone edited the query without remembering to update this field.",
+
+    "sourceFile": "src/lib/required-fields.ts",
+    "exactSource": [
+      "export function deriveRequiredFields(query: string): { name: string; type: string }[] {",
+      "  if (!query) return [];",
+      "  const withoutLiterals = query.replace(QUOTED_STRING_RE, \" \");",
+      "  const matches = withoutLiterals.match(FIELD_TOKEN_RE) || [];",
+      "  const seen = new Map<string, string>();",
+      "  for (const raw of matches) {",
+      "    if (NOT_A_FIELD.has(raw.toLowerCase())) continue;",
+      "    if (seen.has(raw)) continue;",
+      "    seen.set(raw, ECS_FIELD_TYPES[raw] || \"keyword\");",
+      "  }",
+      "  return Array.from(seen.entries()).map(([name, type]) => ({ name, type }));",
+      "}"
+    ],
+
+    "algorithmSteps": [
+      "1. Strip all quoted string literals FIRST (regex: matches both \"...\" and '...' with escape handling) — so a value like \"malware.exe\" is never mistaken for a dotted field reference.",
+      "2. Scan what's left for dotted ECS-style tokens (regex: word.word, word.word.word, etc. — a bare single word like 'and' never matches on its own).",
+      "3. Drop anything in the stop-word set: and, or, not, true, false, null.",
+      "4. Deduplicate.",
+      "5. Look up each surviving token's type in a hardcoded ~45-entry ECS_FIELD_TYPES map (assigns 'date', 'ip', or 'long' to known fields like @timestamp, source.ip, destination.port). Anything not in that map defaults to type 'keyword'."
+    ],
+
+    "outputShape": [{ "name": "source.ip", "type": "ip" }, { "name": "@timestamp", "type": "date" }],
+    "calledFrom": "src/lib/push-to-elastic.ts, at push time: const requiredFields = deriveRequiredFields(rule.query);"
+  }
+}

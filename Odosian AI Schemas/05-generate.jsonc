@@ -1,0 +1,64 @@
+// ============================================================================
+// GENERATE RESULT
+// ============================================================================
+// WHAT: Drafts an entirely new detection rule — query, metadata, MITRE
+// mappings, investigation guide, and a self-assessed quality score — from a
+// plain-language description of the threat to detect.
+//
+// WHEN: User types a threat description in "Generate Rule" mode and submits.
+//
+// ENDPOINT: POST /api/analysis/generate   (status 201)
+// SOURCE:   src/app/api/analysis/generate/route.ts
+//
+// REQUEST BODY:
+//   {
+//     "description": "string, 10-5000 chars",
+//     "saveAsRule": false   // if true, a Rule row is created immediately
+//   }
+// ============================================================================
+
+{
+  "analysis": {
+    "id": "3f2a91c4-1e5b-4a7d-9c88-2b6e4f0a1d3e",
+    "analysisType": "generate",   // literal "generate"
+    "modelUsed": "gemini-2.5-flash",
+    "tokensUsed": 1980,
+    "latencyMs": 6300,
+    "userId": "8a9ffc32-8495-4a25-a616-362d90f35dcc",
+    "createdAt": "2026-07-30T14:02:00.000Z",
+
+    // --- The generated rule itself ---
+    "title": "AWS IAM Policy Attached with Full Administrative Access",
+    "description": "Detects when an IAM policy granting full '*' action and resource permissions is attached to a user, group, or role.",
+    "query": "event.dataset: \"aws.cloudtrail\" and event.action: (\"AttachUserPolicy\" or \"AttachGroupPolicy\" or \"AttachRolePolicy\") and aws.cloudtrail.request_parameters: \"*AdministratorAccess*\"",
+    "language": "kuery",     // one of: kuery | eql | lucene | esql — see 14-query-languages.jsonc
+    "ruleType": "query",     // one of: query | eql | threshold | new_terms | machine_learning | indicator_match — see 15-rule-types.jsonc
+    "severity": "high",      // low | medium | high | critical
+    "riskScore": 78,         // 0-100
+    "tags": ["AWS", "IAM", "Privilege Escalation"],
+
+    // ARRAY here — gets joined with ", " into the single Rule.index string
+    // column if saveAsRule=true or the result is later saved manually.
+    "indexPatterns": ["logs-aws.cloudtrail-*"],
+
+    "interval": "5m",        // must match /^\d+[smh]$/ if persisted
+    "fromTime": "now-6m",
+    "maxSignals": 100,
+    "investigationGuide": "## Overview\n...",
+    "falsePositives": ["Legitimate break-glass admin account provisioning"],
+    "references": ["https://attack.mitre.org/techniques/T1098/"],
+    "mitreMappings": [
+      { "tacticId": "TA0004", "tacticName": "Privilege Escalation", "techniqueId": "T1098", "techniqueName": "Account Manipulation", "subTechniqueId": null, "subTechniqueName": null, "confidence": 80 }
+    ],
+
+    // The AI's OWN self-assessed quality score for the rule it just wrote
+    // (distinct from a full Analyze pass, which would need to be run
+    // separately against this rule after saving it).
+    "score": 82,
+    "notes": "Consider excluding known break-glass account IDs via a lookup list to reduce noise."
+  },
+
+  // Only present if the request had "saveAsRule": true
+  "savedRuleId": "9b1c2d3e-4f5a-6b7c-8d9e-0f1a2b3c4d5e",
+  "savedRuleTitle": "AWS IAM Policy Attached with Full Administrative Access"
+}

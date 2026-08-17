@@ -1,0 +1,27 @@
+// ============================================================================
+// BATCH REVIEW (POST) RESULT
+// ============================================================================
+// WHAT: Bulk-applies (and optionally deploys to Elastic) a selected subset
+// of the enhance batch's proposed changes from 10-batch-review-get.jsonc.
+//
+// WHEN: User checks off which reviewed enhancements to accept and clicks
+// "Apply Selected" (optionally with a deploy-to-Elastic toggle).
+//
+// ENDPOINT: POST /api/analysis/batch/[id]/review   (status 200)
+// SOURCE:   src/app/api/analysis/batch/[id]/review/route.ts
+// ============================================================================
+
+{
+  "results": [
+    {
+      "itemId": "bi1",
+      "ruleId": "r10",
+      "applied": true,
+      "deployed": false
+      // "error": "string"   <- present only if THIS specific item failed to apply/deploy
+    }
+  ],
+
+  "appliedCount": 1,    // total items successfully applied in this request
+  "deployedCount": 0    // total items successfully deployed in this request
+}

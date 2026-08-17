@@ -1,0 +1,113 @@
+// ============================================================================
+// ANALYZE RESULT
+// ============================================================================
+// WHAT: Scores an existing rule OR a raw pasted query. Returns a 0-100 score,
+// a letter grade, categorized findings, prioritized fix suggestions, evasion
+// risks, and MITRE ATT&CK mappings. This is Odosian's core AI quality check —
+// it does NOT rewrite the query (that's Enhance).
+//
+// WHEN: User clicks "Analyze" on a rule, or pastes a raw query in "Raw Query"
+// mode. Also auto-triggered by Enhance if the rule hasn't been analyzed yet.
+//
+// ENDPOINT: POST /api/analysis/analyze   (status 201)
+// SOURCE:   src/app/api/analysis/analyze/route.ts
+//
+// REQUEST BODY (one of ruleId or query is required):
+//   { "ruleId": "uuid" }                          // analyze an existing rule
+//   { "query": "text", "language": "kuery" }      // analyze a raw query
+// ============================================================================
+
+{
+  "analysis": {
+    // --- Identity & provenance ---
+    "id": "896763ce-c154-4e17-bcbb-2cbb99074cc1",       // this Analysis row's own id
+    "ruleId": "1bdc1065-5bd4-4dd6-a6df-c111d643ff90",   // null if this was an ad-hoc raw-query analysis with no saved rule
+    "analysisType": "analyze",                          // always the literal string "analyze" here
+    "inputQuery": "process where host.os.type == \"windows\" and event.type == \"start\" and process.name : \"conhost.exe\" and process.args : \"--headless\" and process.command_line : (\"*powershell*\", \"*cmd *\", \"*cmd.exe *\", \"*script*\")",
+    "outputQuery": "",                                   // Analyze doesn't rewrite the query, so this is normally empty (compare to Enhance)
+
+    // --- The score itself ---
+    "score": 45,          // 0-100
+    "rating": "D",        // letter grade, one of: A+ A B C D F
+    "fpRisk": "high",     // false-positive risk: low | medium | high
+    "feedback": "This rule attempts to detect proxy execution via Console Window Host but is not correctly anchored to the parent-process relationship it claims to detect, allowing both missed detections and unrelated benign activity to trigger it.",
+
+    // --- Balanced summary before the detailed breakdown ---
+    "strengths": [
+      "Correctly targets conhost.exe as the process of interest",
+      "Includes a reasonable set of suspicious command-line substrings"
+    ],
+    "weaknesses": [
+      "Does not verify the actual parent process of conhost.exe",
+      "Command-line substring matching is broad enough to catch legitimate admin tooling",
+      "No exclusion list for known-benign conhost.exe invocations"
+    ],
+
+    // --- Findings: the specific, actionable defects behind the score ---
+    "findings": [
+      {
+        // category is one of: detection_gap | false_positive | performance | ecs_compliance | logic_error | coverage_gap | metadata_issue
+        "category": "logic_error",
+        "severity": "critical",   // critical | high | medium | low
+        "title": "Missing parent-process anchor",
+        "detail": "The rule never checks process.parent.name, so it cannot actually confirm conhost.exe was spawned by a suspicious parent — the core premise of the detection."
+      },
+      {
+        "category": "false_positive",
+        "severity": "high",
+        "title": "Overly broad command-line matching",
+        "detail": "Wildcard substrings like \"*script*\" will match many legitimate administrative and scheduled-task command lines."
+      }
+    ],
+
+    // --- Suggestions: ready-to-use fixes, not just descriptions of the problem ---
+    "suggestions": [
+      {
+        "priority": 1,   // 1 = highest priority
+        "title": "Anchor to parent process",
+        "description": "Require process.parent.name to be one of the known suspicious launchers.",
+        "codeSnippet": "process.parent.name : (\"cmd.exe\", \"powershell.exe\", \"wscript.exe\")"
+      }
+    ],
+
+    // --- How an attacker could bypass this rule as written ---
+    "evasionRisks": [
+      {
+        "technique": "Command-line encoding",
+        "description": "Base64 or otherwise encoding the payload avoids the plaintext substring matches entirely.",
+        "mitigation": "Add decoding-aware detection or flag encoded-command flags directly (e.g. -enc, -EncodedCommand)."
+      }
+    ],
+
+    // --- MITRE ATT&CK mappings: also written as real rows into the MitreMapping
+    //     table for this rule (replacing any prior mappings), so this array
+    //     always matches what the rule detail page / MITRE matrix show after.
+    "mitreMappings": [
+      {
+        "tacticId": "TA0005",
+        "tacticName": "Defense Evasion",
+        "techniqueId": "T1036",
+        "techniqueName": "Masquerading",
+        "subTechniqueId": null,        // null when not a sub-technique
+        "subTechniqueName": null,
+        "confidence": 70               // 0-100
+      },
+      {
+        "tacticId": "TA0002",
+        "tacticName": "Execution",
+        "techniqueId": "T1059",
+        "techniqueName": "Command and Scripting Interpreter",
+        "subTechniqueId": "T1059.001",
+        "subTechniqueName": "PowerShell",
+        "confidence": 65
+      }
+    ],
+
+    // --- Call metadata (cost/provenance tracking) ---
+    "modelUsed": "gemini-2.5-flash",
+    "tokensUsed": 2841,
+    "latencyMs": 8120,
+    "userId": "8a9ffc32-8495-4a25-a616-362d90f35dcc",
+    "createdAt": "2026-07-24T09:12:03.000Z"   // ISO 8601
+  }
+}

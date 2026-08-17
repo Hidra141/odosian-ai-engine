@@ -1,0 +1,70 @@
+// ============================================================================
+// SIMULATE RESULT
+// ============================================================================
+// WHAT: A step-by-step manual attack-execution plan for validating that a
+// rule actually fires — prerequisites, commands, expected alerts,
+// validation steps, and cleanup.
+//
+// NOT PERSISTED: unlike every other result type on this list, this is
+// stateless. It's only logged to the audit trail (action:
+// "SIMULATION_CREATED") — there's no queryable "Simulation" record to fetch
+// again later, so the frontend must hold onto this result itself.
+//
+// WHEN: User clicks "Simulate" on a rule detail page.
+//
+// ENDPOINT: POST /api/rules/[id]/simulate   (status 200)
+// SOURCE:   src/app/api/rules/[id]/simulate/route.ts
+// NOTE: Uses an inline system prompt (callAIWithSystemPrompt), not a
+// database-stored Prompt row like Analyze/Enhance/Generate do.
+//
+// REQUEST: ruleId comes from the URL path, no request body needed.
+// ============================================================================
+
+{
+  "simulation": {
+    "scenario": "Simulate an attacker using conhost.exe as an execution proxy by spawning it from a PowerShell parent process with an encoded command, to validate the enhanced detection rule fires correctly.",
+
+    "prerequisites": [
+      "A Windows test host with Sysmon or equivalent EDR telemetry forwarding to the SIEM",
+      "Local admin rights on the test host",
+      "Elastic Agent installed and enrolled"
+    ],
+
+    "steps": [
+      {
+        "stepNumber": 1,
+        "action": "Open an elevated PowerShell prompt",
+        "command": "Start-Process powershell -Verb RunAs",
+        "expectedOutput": "Elevated PowerShell window opens",
+        "notes": "Ensure this is on an isolated test host, not production"
+      },
+      {
+        "stepNumber": 2,
+        "action": "Spawn conhost.exe with a suspicious encoded command line",
+        "command": "Start-Process conhost.exe -ArgumentList '--headless powershell -enc SQBFAFgA...'",
+        "expectedOutput": "conhost.exe process created with parent powershell.exe",
+        "notes": "Encoded payload is a harmless no-op for testing purposes"
+      }
+    ],
+
+    "expectedAlerts": [
+      "An alert titled to match the enhanced rule's title, severity high, referencing the test host"
+    ],
+    "validationSteps": [
+      "Check Kibana's Detection Engine alerts view for a new signal matching the rule ID",
+      "Confirm process.parent.name and process.name in the alert match the simulated activity"
+    ],
+    "cleanupCommands": [
+      "Get-Process conhost | Where-Object {$_.StartTime -gt (Get-Date).AddMinutes(-5)} | Stop-Process -Force"
+    ]
+  },
+
+  // Note: this lives at the TOP level as "meta", not nested inside
+  // "simulation" — different from how other result types embed their
+  // call metadata directly on the analysis object.
+  "meta": {
+    "modelUsed": "gemini-2.5-flash",
+    "tokensUsed": 1540,
+    "latencyMs": 5200
+  }
+}

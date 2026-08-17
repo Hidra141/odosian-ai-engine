@@ -1,0 +1,40 @@
+// ============================================================================
+// PUSH-TO-ELASTIC RESULT
+// ============================================================================
+// WHAT: The DIRECT, synchronous result of one deploy/update-in-Elastic
+// action. Distinct from 12-deployments-list.jsonc, which is the
+// ASYNC/HISTORICAL view of the same event derived from the audit log
+// afterward — this is what you get back immediately when the push happens.
+//
+// SIDE EFFECTS on success: updates Rule.elasticRuleId, Rule.elasticEnabled,
+// Rule.elasticConnectionId, Rule.elasticSyncedSnapshot, Rule.elasticSyncedAt,
+// and writes the AuditLog row that 12-deployments-list.jsonc later reads back.
+//
+// WHEN: User clicks "Update in Elastic" / "Deploy" on a rule.
+//
+// ENDPOINT: POST /api/rules/[id]/push-elastic   (status 200)
+// SOURCE:   src/lib/push-to-elastic.ts (function pushRuleToElastic)
+// ============================================================================
+
+{
+  "success": true,   // literal true — errors throw instead of returning false
+
+  // Elastic's rule_id. Prefixed "odosian-" specifically for rules Odosian
+  // itself created/owns — see the "duplicated" field below for what happens
+  // when the rule did NOT originate from Odosian.
+  "elasticRuleId": "odosian-1bdc1065-5bd4-4dd6-a6df-c111d643ff90",
+
+  "action": "updated",   // "created" | "updated"
+
+  // true if this push forked a rule Odosian doesn't own (e.g. pulled from
+  // Elastic, or a prebuilt vendor rule) into a brand-new duplicate, rather
+  // than updating it in place — Odosian never silently rewrites content it
+  // didn't create.
+  "duplicated": false,
+
+  // true only if "duplicated" is true AND the original rule was
+  // successfully disabled in Elastic after the duplicate was created.
+  "oldRuleDisabled": false,
+
+  "enabled": true   // whether the rule was pushed in an enabled or disabled state
+}

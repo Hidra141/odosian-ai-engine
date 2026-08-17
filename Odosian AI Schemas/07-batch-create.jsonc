@@ -1,0 +1,17 @@
+// ============================================================================
+// BATCH CREATE RESULT
+// ============================================================================
+// WHAT: Kicks off a bulk AI operation (analyze, enhance, or post_enhance)
+// across many rules at once. Runs asynchronously in the background — this
+// response only confirms the batch was created. Poll 09-batch-detail.jsonc
+// for progress.
+//
+// WHEN: User selects multiple rules and chooses a bulk AI action.
+//
+// ENDPOINT: POST /api/analysis/batch   (status 201)
+// SOURCE:   src/app/api/analysis/batch/route.ts
+// ============================================================================
+
+{
+  "batchId": "c7d8e9f0-1a2b-3c4d-5e6f-7a8b9c0d1e2f"
+}

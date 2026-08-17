@@ -1,0 +1,86 @@
+// ============================================================================
+// ENHANCE RESULT
+// ============================================================================
+// WHAT: The AI rewrites a rule's query and metadata, returning a structured
+// changelog explaining every change. This is a PREVIEW ONLY — nothing is
+// written to the actual rule until the user clicks "Apply to Rule" (see
+// 04-apply-enhancement.jsonc).
+//
+// WHEN: User clicks "Enhance" on a rule. Requires a prior Analyze pass to
+// exist — if it doesn't, the frontend auto-runs Analyze first, then retries
+// Enhance automatically (shown as "Step 1/2... Step 2/2..." in the UI).
+//
+// ENDPOINT: POST /api/analysis/enhance   (status 201)
+// SOURCE:   src/app/api/analysis/enhance/route.ts (logic in src/lib/enhance-rule.ts)
+//
+// REQUEST BODY:
+//   { "ruleId": "uuid" }
+//
+// SHAPE NOTE: response = { ...analysisDbRow, ...enhanceResultFields }
+// The enhance-result fields are spread LAST, so they win over any
+// same-named DB column — that's why "enhancedQuery" appears instead of
+// the DB's "outputQuery" column name.
+// ============================================================================
+
+{
+  "analysis": {
+    // --- DB row fields ---
+    "id": "80ea7075-5585-4f0f-914a-f643b4c8c3f2",
+    "ruleId": "1bdc1065-5bd4-4dd6-a6df-c111d643ff90",
+    "analysisType": "enhance",                          // literal "enhance"
+    "inputQuery": "process where host.os.type == \"windows\" and event.type == \"start\" and process.name : \"conhost.exe\" and process.args : \"--headless\" and process.command_line : (\"*powershell*\", \"*cmd *\", \"*cmd.exe *\", \"*script*\")",  // the ORIGINAL query, before enhancement
+
+    // score/rating are ALWAYS 0 / "" for enhance records, on purpose:
+    // enhancement is a rewrite operation, not a scored analysis. The UI
+    // history table shows a dash instead of "0" for this exact reason.
+    "score": 0,
+    "rating": "",
+
+    "modelUsed": "gemini-2.5-flash",
+    "tokensUsed": 3772,
+    "latencyMs": 14400,
+    "userId": "8a9ffc32-8495-4a25-a616-362d90f35dcc",
+    "createdAt": "2026-07-24T09:14:11.000Z",
+
+    // --- EnhanceResult fields (the actual AI output) ---
+    "enhancedQuery": "process where host.os.type == \"windows\" and event.type == \"start\" and (process.name : \"cmd.exe\" or process.name : \"powershell.exe\") and process.args : \"--headless\" and process.command_line : (\"*powershell*\", \"*cmd *\", \"*cmd.exe *\", \"*script*\") and not process.parent.name : \"conhost.exe\"",
+
+    // One entry per distinct fix, each with its own justification —
+    // this is what renders as the "Changelog" card in the UI.
+    "changelog": [
+      { "change": "Added process.parent.name anchor", "reason": "Original rule never verified the parent-process relationship it claimed to detect" },
+      { "change": "Narrowed process.name to explicit launcher list", "reason": "Reduces false positives from unrelated conhost.exe invocations" },
+      { "change": "Added negative filter for explorer.exe parent", "reason": "Excludes the most common benign conhost.exe launch path" }
+    ],
+
+    "newSeverity": "high",   // low | medium | high | critical
+    // WARNING: newRiskScore is AI-generated and NOT guaranteed to arrive as
+    // a real JSON number. Some model/gateway combinations emit it as a
+    // quoted string (e.g. "72" instead of 72). Always coerce with Number()
+    // and check Number.isFinite() before persisting — do not trust the raw type.
+    "newRiskScore": 72,
+
+    "investigationGuide": "## Overview\n...\n## Triage Steps\n...\n## True Positive Indicators\n...\n## False Positive Indicators\n...\n## Response Actions\n...\n## Related Rules\n...",
+    "falsePositives": [
+      "Legitimate admin scripting via approved tooling that matches the command-line pattern"
+    ],
+    "references": [
+      "https://attack.mitre.org/techniques/T1036/",
+      "https://attack.mitre.org/techniques/T1059/"
+    ],
+
+    // ARRAY of strings here. Contrast with the Rule model's own "index"
+    // field, which is a single comma-joined STRING — see 16-related-fields.jsonc
+    "indexPatterns": ["winlogbeat-*", "logs-endpoint.events.*"],
+
+    // Proposed new mappings — NOT yet written to the MitreMapping table.
+    // They only become "real" once a subsequent Analyze/post-enhance pass runs.
+    "newMitreMappings": [
+      { "tacticId": "TA0005", "tacticName": "Defense Evasion", "techniqueId": "T1036", "techniqueName": "Masquerading", "subTechniqueId": null, "subTechniqueName": null, "confidence": 85 },
+      { "tacticId": "TA0002", "tacticName": "Execution", "techniqueId": "T1059", "techniqueName": "Command and Scripting Interpreter", "subTechniqueId": "T1059.001", "subTechniqueName": "PowerShell", "confidence": 90 }
+    ],
+
+    "enhancedTitle": "Suspicious Parent Process Execution via Console Window Host Proxy (Parent Process Verified)",
+    "enhancedDescription": "Detects abuse of Console Window Host (conhost.exe) as an execution proxy, now correctly anchored to a verified suspicious parent process rather than command-line pattern alone."
+  }
+}

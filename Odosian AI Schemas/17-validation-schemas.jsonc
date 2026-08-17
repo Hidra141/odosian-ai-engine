@@ -1,0 +1,87 @@
+// ============================================================================
+// VALIDATION SCHEMAS REFERENCE
+// ============================================================================
+// WHAT: Every Zod validation rule relevant to query/language input, quoted
+// exactly from source. Two different strictness levels exist — pay
+// attention to which schema applies where.
+//
+// SOURCE: src/lib/validation.ts
+// ============================================================================
+
+{
+  // --------------------------------------------------------------------
+  // STRICT schema — used when actually creating/updating a saved Rule
+  // --------------------------------------------------------------------
+  "ruleCreateSchema": {
+    "note": "language and ruleType are STRICT enums here — free text is rejected.",
+    "fields": {
+      "title": "z.string().min(3).max(200) — sanitized (XSS-pattern stripped)",
+      "description": "z.string().max(2000).default(\"\") — sanitized",
+      "query": "z.string().min(1, \"Detection query is required\").max(10000)",
+      "ruleType": "z.enum([\"query\", \"eql\", \"threshold\", \"new_terms\", \"machine_learning\", \"indicator_match\"])",
+      "severity": "z.enum([\"low\", \"medium\", \"high\", \"critical\"])",
+      "language": "z.enum([\"kuery\", \"eql\", \"lucene\", \"esql\"])",
+      "riskScore": "z.number().int().min(0).max(100).default(50)",
+      "index": "z.string().max(500).default(\"\") — single comma-separated string, see 16-related-fields.jsonc",
+      "tags": "z.array(z.string().max(100)).max(20).default([])",
+      "client": "z.string().max(100).default(\"\") — sanitized",
+      "category": "z.string().max(50).default(\"\") — sanitized",
+      "interval": "z.string().regex(/^\\d+[smh]$/, \"Invalid interval format\").default(\"5m\") — a number followed by exactly one of s/m/h",
+      "fromTime": "z.string().max(50).default(\"now-6m\")",
+      "maxSignals": "z.number().int().min(1).max(10000).default(100)",
+      "investigationGuide": "z.string().max(5000).default(\"\") — sanitized",
+      "references": "z.array(z.string().max(500)).max(20).default([])",
+      "falsePositives": "z.array(z.string().max(500)).max(20).default([])",
+      "status": "z.enum([\"draft\", \"reviewed\", \"production\", \"deprecated\"]).default(\"draft\")",
+      "license": "z.string().max(200).default(\"\") — sanitized",
+      "timestampOverride": "z.string().max(200).default(\"\")",
+      "relatedIntegrations": "z.array(z.object({ package: z.string().max(100), version: z.string().max(50) })).max(20).default([])",
+      "requiredFields": "z.array(z.object({ name: z.string().max(200), type: z.string().max(50) })).max(50).default([]) — see 16-related-fields.jsonc for how this is actually computed; never trust client-supplied values for it at push time",
+      "timelineId": "z.string().max(200).default(\"\")",
+      "timelineTitle": "z.string().max(200).default(\"\")",
+      "investigationFields": "z.array(z.string().max(200)).max(50).default([])",
+      "thresholdField": "z.string().max(500).default(\"\") — only meaningful when ruleType is \"threshold\"",
+      "thresholdValue": "z.number().int().min(1).default(1) — only meaningful when ruleType is \"threshold\"",
+      "newTermsFields": "z.string().max(500).default(\"\") — only meaningful when ruleType is \"new_terms\"",
+      "historyWindowStart": "z.string().max(50).default(\"now-7d\") — only meaningful when ruleType is \"new_terms\"",
+      "threatIndex": "z.string().max(500).default(\"\") — only meaningful when ruleType is \"indicator_match\"",
+      "threatQuery": "z.string().max(2000).default(\"*:*\") — only meaningful when ruleType is \"indicator_match\"",
+      "threatMapping": "z.string().max(5000).default(\"[]\") — only meaningful when ruleType is \"indicator_match\"; stored as a JSON string, not a real array field"
+    }
+  },
+
+  "ruleUpdateSchema": "ruleCreateSchema.partial() — identical field rules, every field becomes optional",
+
+  // --------------------------------------------------------------------
+  // LOOSE schemas — used for AI operation requests, deliberately less strict
+  // --------------------------------------------------------------------
+  "analyzeSchema": {
+    "note": "language/ruleType are UNCONSTRAINED z.string() here — NOT the strict 4/6-value enums used by ruleCreateSchema. This is intentional: ad-hoc raw-query analysis shouldn't be blocked by a strict enum before the AI even sees it.",
+    "fields": {
+      "ruleId": "z.string().uuid().optional()",
+      "query": "z.string().min(1).max(10000).optional()",
+      "language": "z.string().optional() — unconstrained",
+      "ruleType": "z.string().optional() — unconstrained",
+      "postEnhancement": "z.boolean().optional()"
+    },
+    "crossFieldRule": ".refine((data) => data.ruleId || data.query, { message: \"Either ruleId or query is required\" }) — at least one of the two must be present"
+  },
+
+  "enhanceSchema": {
+    "fields": { "ruleId": "z.string().uuid()" }
+  },
+
+  "generateSchema": {
+    "fields": {
+      "description": "z.string().min(10, \"Description must be at least 10 characters\").max(5000)",
+      "saveAsRule": "z.boolean().default(false)"
+    }
+  },
+
+  "feedbackSchema": {
+    "fields": {
+      "query": "z.string().min(1, \"Query is required\").max(10000)",
+      "language": "z.string().default(\"kuery\")"
+    }
+  }
+}

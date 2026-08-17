@@ -1,0 +1,39 @@
+// ============================================================================
+// RULE TYPES REFERENCE
+// ============================================================================
+// WHAT: Odosian's internal "ruleType" values and how they map onto Elastic's
+// Detection Engine "type" field on push.
+//
+// SOURCE: src/lib/push-to-elastic.ts (mapRuleType function)
+// ============================================================================
+
+{
+  "odosianValues": ["query", "eql", "threshold", "new_terms", "machine_learning", "indicator_match"],
+
+  "displayLabels": {
+    "query": "Query",
+    "eql": "EQL",
+    "threshold": "Threshold",
+    "new_terms": "New Terms",
+    "machine_learning": "Machine Learning",
+    "indicator_match": "Indicator Match"
+  },
+
+  "mapRuleType_function": {
+    "sourceFile": "src/lib/push-to-elastic.ts",
+    "exactSource": [
+      "function mapRuleType(ruleType: string, language: string): string {",
+      "  if (ruleType === \"eql\" || language === \"eql\") return \"eql\";",
+      "  if (ruleType === \"esql\" || language === \"esql\") return \"esql\";",
+      "  if (ruleType === \"threshold\") return \"threshold\";",
+      "  if (ruleType === \"machine_learning\") return \"machine_learning\";",
+      "  if (ruleType === \"indicator_match\") return \"threat_match\";",
+      "  if (ruleType === \"new_terms\") return \"new_terms\";",
+      "  return \"query\";",
+      "}"
+    ],
+    "languagePrecedence": "For the eql/esql cases specifically (checked first), LANGUAGE overrides ruleType — so a rule with ruleType=\"query\" but language=\"eql\" still gets pushed as an eql-type rule. For every other ruleType value, ruleType alone decides the Elastic type.",
+    "notableMismatch": "Odosian's own field value is \"indicator_match\", but Elastic's wire format for the exact same concept is called \"threat_match\" — this function is the ONE place that naming difference is translated. The reverse mapping (Elastic's \"threat_match\" -> Odosian's \"indicator_match\") happens on the pull-from-Elastic path.",
+    "defaultFallback": "Any ruleType not matching one of the explicit checks above falls through to \"query\" — the same silent-default pattern used by mapLanguage()."
+  }
+}

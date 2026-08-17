@@ -1,0 +1,28 @@
+// ============================================================================
+// BATCH LIST RESULT
+// ============================================================================
+// WHAT: Lists every batch run, with live-counted progress per batch.
+//
+// WHEN: User opens the "Batch Runs" tab on the Shield Analysis History page.
+//
+// ENDPOINT: GET /api/analysis/batch   (status 200)
+// SOURCE:   src/app/api/analysis/batch/route.ts
+// CONSUMED BY: src/components/batch-list.tsx
+// ============================================================================
+
+{
+  "batches": [
+    {
+      "id": "c7d8e9f0-1a2b-3c4d-5e6f-7a8b9c0d1e2f",
+      "operation": "analyze",     // "analyze" | "enhance" | "post_enhance" (observed values)
+      "status": "completed",     // batch lifecycle state — endpoints exist for pause/resume/stop, so also expect "running" | "paused" | "stopped"
+      "totalCount": 25,          // total rules in this batch
+      "completedCount": 23,      // derived live from item statuses, not a stored counter
+      "failedCount": 1,
+      "skippedCount": 1,
+      "createdBy": "Mohd Alkafaween",   // already-resolved display name, not a user id
+      "createdAt": "2026-07-29T10:00:00.000Z",
+      "updatedAt": "2026-07-29T10:14:00.000Z"
+    }
+  ]
+}
