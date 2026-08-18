@@ -43,10 +43,12 @@ SUBFIELD_SEPARATOR: Final[str] = "."
 NORMALISED_SUBFIELDS: Final[frozenset[str]] = frozenset({"caseless"})
 """The multi-field suffixes read as a modifier rather than as part of the name.
 
-Closed, and closed on evidence: ``.caseless`` occurs 169 times across the kuery
-corpus and ``.keyword`` and ``.text`` occur not at all, while one real ECS field
-ends in one of those two. Widening this set would rename fields the corpus
-actually defines.
+Closed, and closed on evidence. Across the Elastic query corpus ``.caseless``
+occurs 156 times, over 8 rules and on one base field only, ``process.name``;
+147 of those are written in ES|QL and 9 in Kuery. ``.keyword`` never occurs and
+``.text`` occurs once. No ECS field ends in ``.caseless``, while
+``process.io.text`` does end in ``.text``, so widening this set would rename a
+field the corpus actually defines.
 """
 
 FieldTable = Mapping[str, EntityType]

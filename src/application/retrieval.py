@@ -44,6 +44,7 @@ raises where it happens.
 from __future__ import annotations
 
 from collections.abc import Iterable
+from collections.abc import Set as AbstractSet
 from pathlib import Path
 from typing import Final, final
 
@@ -53,8 +54,9 @@ from src.graphrag.config import GraphRagSettings
 from src.graphrag.interfaces import Retriever
 from src.graphrag.models import RetrievalQuery, RetrievalResult
 from src.graphrag.retriever import GraphRagRetriever
+from src.knowledge.models.types import KnowledgeSource
 from src.knowledge.repository.jsonl_repository import JsonlKnowledgeRepository
-from src.mapping.models import MappedEntities
+from src.mapping.models import MappedEntities, MappedEntity
 from src.mapping.types import CanonicalType
 
 DEFAULT_SETTINGS: Final[GraphRagSettings] = GraphRagSettings()
@@ -115,24 +117,86 @@ def _ordered(values: Iterable[str | None]) -> tuple[str, ...]:
     return tuple(dict.fromkeys(value for value in values if value))
 
 
-def rule_query(rule: RuleContext, mappings: MappedEntities, *, top_k: int) -> RetrievalQuery:
+def rule_query(
+    rule: RuleContext,
+    mappings: MappedEntities,
+    *,
+    top_k: int,
+    ecs_fields: AbstractSet[str] = frozenset(),
+) -> RetrievalQuery:
     """Return what an existing rule asks the corpus.
 
-    The identifiers are narrowed to those naming something the corpus can hold;
-    the fields are not narrowed, because only the field mapper sets
-    ``canonical_field`` and every value it sets is an ECS field name.
+    The identifiers are narrowed to those naming something the corpus can hold.
+    The fields are the ones Stage-10 resolved, together with the ones it could
+    not resolve that name an ECS field anyway — see :func:`_asks_about_a_field`.
+
+    ``ecs_fields`` is the set of field names the corpus documents, supplied by
+    the service that read it. It defaults to empty, so a caller that has no
+    corpus to hand asks exactly what it asked before.
     """
-    resolved = mappings.resolved
     return RetrievalQuery(
         text=rule.query or "",
         entity_ids=_ordered(
             entity.canonical_id
-            for entity in resolved
+            for entity in mappings.resolved
             if entity.canonical_type in CORPUS_KEYED_TYPES
         ),
-        canonical_fields=_ordered(entity.canonical_field for entity in resolved),
+        canonical_fields=_ordered(
+            entity.canonical_field
+            for entity in mappings
+            if _asks_about_a_field(entity, ecs_fields)
+        ),
         max_results=top_k,
     )
+
+
+def _asks_about_a_field(entity: MappedEntity, ecs_fields: AbstractSet[str]) -> bool:
+    """Return whether this mapping names a field the corpus can be asked about.
+
+    Two ways to qualify, and the first is the one that already existed: Stage-10
+    resolved the name through its alias table, which is what ``Image`` and
+    ``process.executable`` do. Those seed exactly as they did before, whether or
+    not ECS carries the name they resolved to.
+
+    The second is C3. An unresolved field name still names a field — the alias
+    table is a table of shared spellings, not a list of every field there is —
+    and if the corpus documents a field of exactly that name then a record
+    exists to answer for it. ``event.action`` is unresolved and real; asking
+    about it is as sound as asking about a technique identifier.
+
+    Membership is an exact, case-insensitive lookup in a set read from the
+    corpus. Nothing is inferred from a name's shape, so ``auditd.data.a0`` is
+    not admitted for being dotted, and nothing is added to Stage-10's table.
+
+    Only the field mapper ever sets ``canonical_field``, so a severity, a
+    network, a port or an event id cannot reach this test at all: F2 decides
+    those, and it decides them on ``canonical_id``.
+    """
+    name = (entity.canonical_field or "").strip()
+    if not name:
+        return False
+    return entity.is_resolved or name.lower() in ecs_fields
+
+
+def ecs_field_names(repository: JsonlKnowledgeRepository) -> frozenset[str]:
+    """Return the field names the ECS dataset documents, lower-cased.
+
+    Read from the corpus rather than declared here, so the set is whatever the
+    knowledge base actually holds and cannot drift from it. A record that states
+    no field name — ECS also ships field-*set* records — contributes nothing.
+
+    A corpus with no ECS dataset returns an empty set, which leaves seeding
+    exactly as it was rather than failing a build over an absent optional
+    dataset.
+    """
+    if KnowledgeSource.ECS not in repository.available_sources():
+        return frozenset()
+    names: list[str] = []
+    for record in repository.iterate_source(KnowledgeSource.ECS):
+        name = (record.metadata or {}).get("fieldName")
+        if isinstance(name, str) and name.strip():
+            names.append(name.strip().lower())
+    return frozenset(names)
 
 
 def requirement_query(requirement: str, *, top_k: int) -> RetrievalQuery:
@@ -148,12 +212,18 @@ def requirement_query(requirement: str, *, top_k: int) -> RetrievalQuery:
 class RetrievalService:
     """Holds one built retriever and asks it what a request needs."""
 
-    __slots__ = ("_retriever", "_settings")
+    __slots__ = ("_retriever", "_settings", "_ecs_fields")
 
-    def __init__(self, retriever: Retriever, settings: GraphRagSettings) -> None:
-        """Hold a retriever that is already built."""
+    def __init__(
+        self,
+        retriever: Retriever,
+        settings: GraphRagSettings,
+        ecs_fields: AbstractSet[str] = frozenset(),
+    ) -> None:
+        """Hold a retriever that is already built, and what ECS documents."""
         self._retriever = retriever
         self._settings = settings
+        self._ecs_fields = ecs_fields
 
     @classmethod
     def build(
@@ -165,31 +235,57 @@ class RetrievalService:
 
         Expensive, and meant to be called once. Every dataset under
         ``knowledge_dir`` is read, chunked and indexed before this returns.
+
+        The ECS field names are read from the same repository, on the pass that
+        is already happening. No second source of ECS truth is introduced and
+        nothing is derived that the corpus does not state.
         """
         resolved = settings if settings is not None else DEFAULT_SETTINGS
         repository = JsonlKnowledgeRepository.from_root(knowledge_dir)
         graph = GraphBuilder.over(repository).build()
         retriever = GraphRagRetriever(repository, graph, resolved)
         retriever.build_index()
-        return cls(retriever, resolved)
+        return cls(retriever, resolved, ecs_field_names(repository))
 
     @classmethod
     def of(
         cls,
         retriever: Retriever,
         settings: GraphRagSettings | None = None,
+        ecs_fields: AbstractSet[str] = frozenset(),
     ) -> RetrievalService:
-        """Wrap a retriever built elsewhere, without building anything."""
-        return cls(retriever, settings if settings is not None else DEFAULT_SETTINGS)
+        """Wrap a retriever built elsewhere, without building anything.
+
+        The field names default to none, because a caller supplying its own
+        retriever may have no corpus to read them from. A service without them
+        seeds exactly the fields Stage-10 resolved, as it did before.
+        """
+        return cls(
+            retriever,
+            settings if settings is not None else DEFAULT_SETTINGS,
+            ecs_fields,
+        )
 
     @property
     def settings(self) -> GraphRagSettings:
         """Return the settings queries are seeded from."""
         return self._settings
 
+    @property
+    def ecs_fields(self) -> AbstractSet[str]:
+        """Return the ECS field names this service validates against."""
+        return self._ecs_fields
+
     def for_rule(self, rule: RuleContext, mappings: MappedEntities) -> RetrievalResult:
         """Return what the corpus says about an existing rule."""
-        return self._retriever.retrieve(rule_query(rule, mappings, top_k=self._settings.top_k))
+        return self._retriever.retrieve(
+            rule_query(
+                rule,
+                mappings,
+                top_k=self._settings.top_k,
+                ecs_fields=self._ecs_fields,
+            )
+        )
 
     def for_requirement(self, requirement: str) -> RetrievalResult:
         """Return what the corpus says about a stated detection requirement."""
