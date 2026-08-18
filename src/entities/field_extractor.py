@@ -19,7 +19,7 @@ from __future__ import annotations
 import re
 from typing import Final, final
 
-from .base_extractor import split_field
+from .base_extractor import introduces_a_value, split_field
 from .models import Entity, ExtractionContext
 from .types import EntityType, RuleSection
 
@@ -76,10 +76,32 @@ class FieldExtractor:
         return tuple(found)
 
     def _query_fields(self, context: ExtractionContext) -> list[Entity]:
-        """Return dotted field identifiers found lexically in a query string."""
+        """Return dotted identifiers a query names outside any clause it states.
+
+        The sweep is lexical and cannot tell a field from a value: a lowercase
+        filename and a dotted field name have the same shape, which is how
+        ``powershell.exe`` came to be reported as a field. Anything the clause
+        reader has already paired is therefore left to it, since that reading
+        knows which side of the separator the text sat on and this one does not.
+
+        What remains is a dotted name a clause names but the reader could not
+        pair — an unterminated group, say. It is still reported, because the
+        separator proves a field was written there, but it carries ``query`` as
+        its source: the sweep does not know which values belonged to it, and
+        naming one would be the guess this avoids.
+
+        A token with no separator after it is a value, whatever its shape.
+        ``lsass.exe``, ``blogspot.com`` and ``rc.local`` are indistinguishable
+        from field names by spelling alone, and distinguishable from them by the
+        one thing the query does state: what follows. Nothing is matched against
+        a list of extensions or hosts, because such a list would be a guess about
+        vocabulary rather than a reading of syntax.
+        """
         query = context.rule.detection.query
         if not query:
             return []
+        stated = {item.field for item in context.occurrences}
+        stated.update(item.value for item in context.occurrences)
         return [
             Entity(
                 entity_type=EntityType.FIELD,
@@ -90,4 +112,6 @@ class FieldExtractor:
                 extractor=self.name,
             )
             for match in _DOTTED_FIELD.finditer(query)
+            if match.group(0) not in stated
+            and introduces_a_value(query, match.end())
         ]

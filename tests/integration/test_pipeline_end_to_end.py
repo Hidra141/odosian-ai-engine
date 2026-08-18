@@ -309,7 +309,10 @@ def test_a_raw_query_reaches_the_real_corpus_on_its_text_alone(retrieval):
     rule = rule_context_from_parsed(parsed)
 
     assert entities.entities, "the query must yield entities without a parser"
-    assert mappings.resolved == (), "nothing resolves from a bare query, and none is invented"
+    assert mappings.resolved, "the fields the query states must resolve"
+    assert all(
+        item.canonical_id is None for item in mappings.resolved
+    ), "a bare query names no identifier, and none is invented"
 
     found = retrieval.for_rule(rule, mappings)
     assert len(found) > 0, "the lexical route must still retrieve from the real corpus"

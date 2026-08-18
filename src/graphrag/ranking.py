@@ -28,13 +28,24 @@ can be read back as the reason the item is where it is.
 * **section** — detection logic outranks a reference list.
 
 Ties break on chunk id, so the order is stable across runs.
+
+One exception, and it is an ordering rule rather than a scoring one. Every ECS
+field chunk a query seeds scores identically — same match kind, same entity
+agreement, same hop count, same source, same section, and no lexical evidence —
+so chunk id decides which of a rule's own fields survives the result limit, by
+spelling. :func:`_ecs_in_field_order` replaces that one arbitrary choice with
+the order the rule named its fields in, and does nothing else: tied ECS
+candidates are permuted among the positions they already hold, so no candidate
+of any other source moves and no total changes.
 """
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Final, final
+
+from src.knowledge.models.types import KnowledgeSource
 
 from .config import GraphRagSettings
 from .models import Candidate, RetrievalQuery, RetrievalScore
@@ -100,7 +111,7 @@ class DeterministicRanker:
         """Return the candidates in rank order, best first."""
         scored = [(candidate, self.score(candidate, query)) for candidate in candidates]
         scored.sort(key=lambda item: (-item[1].total, item[0].chunk.chunk_id))
-        return tuple(scored)
+        return _ecs_in_field_order(scored, query)
 
     def _exact_identifier(self, candidate: Candidate) -> float:
         """Return 1.0 when a query identifier appears literally in the chunk."""
@@ -150,3 +161,90 @@ class DeterministicRanker:
         if not hops:
             return 0.0
         return _HOP_DECAY ** min(hops)
+
+
+def _ecs_in_field_order(
+    scored: Sequence[tuple[Candidate, RetrievalScore]],
+    query: RetrievalQuery,
+) -> tuple[tuple[Candidate, RetrievalScore], ...]:
+    """Return the ranking with tied ECS candidates in the order the query named them.
+
+    A rule that names ``file.path``, ``process.executable`` and ``process.name``
+    names them in that order, and :func:`~src.application.retrieval._ordered`
+    carries that order through to :attr:`RetrievalQuery.canonical_fields`
+    unchanged. When the result limit cuts through a run of ECS candidates that
+    score identically — which is every run of them, because the seven components
+    are constants of the class — that order is the only non-arbitrary answer
+    available, and it is the rule's own.
+
+    Nothing else moves. Candidates are permuted **within the positions the ECS
+    members already occupy**, so an item of any other source keeps the rank it
+    had, the interleaving between sources is exactly what the score produced, and
+    no total is recomputed. A run holding fewer than two ECS candidates has no
+    ordering to decide and is left alone.
+
+    A query naming no field cannot seed ECS at all, so the pass returns
+    immediately rather than walking a ranking it could not change.
+    """
+    positions = {
+        name.strip().lower(): index
+        for index, name in enumerate(query.canonical_fields)
+        if name and name.strip()
+    }
+    if not positions:
+        return tuple(scored)
+
+    ordered = list(scored)
+    for start, stop in _tied_runs(ordered):
+        slots = [
+            index
+            for index in range(start, stop)
+            if ordered[index][0].chunk.source is KnowledgeSource.ECS
+        ]
+        if len(slots) < 2:
+            continue
+        members = [ordered[index] for index in slots]
+        members.sort(
+            key=lambda item: (_field_position(item[0], positions), item[0].chunk.chunk_id)
+        )
+        for slot, member in zip(slots, members, strict=True):
+            ordered[slot] = member
+    return tuple(ordered)
+
+
+def _tied_runs(
+    scored: Sequence[tuple[Candidate, RetrievalScore]],
+) -> Iterator[tuple[int, int]]:
+    """Yield the half-open index ranges of candidates sharing one total.
+
+    The ranking is already sorted by total, so equal totals are adjacent and one
+    pass finds every run.
+    """
+    start = 0
+    for index in range(1, len(scored) + 1):
+        if index == len(scored) or scored[index][1].total != scored[start][1].total:
+            if index - start > 1:
+                yield start, index
+            start = index
+
+
+def _field_position(candidate: Candidate, positions: Mapping[str, int]) -> int:
+    """Return where the query named the field this candidate answers to.
+
+    The field is read from the evidence rather than from the chunk, because the
+    evidence records the value the query actually seeded with — the graph keeps
+    it alongside the node's canonical id — and matching on that is exact where
+    matching a name against a chunk's identifier would be a second guess at what
+    already happened.
+
+    A candidate naming several of the query's fields takes the earliest, and one
+    naming none sorts after every candidate that does, keeping its chunk id
+    order rather than jumping the queue.
+    """
+    found = [
+        positions[entity.strip().lower()]
+        for evidence in candidate.evidence
+        for entity in evidence.matched_entities
+        if entity.strip().lower() in positions
+    ]
+    return min(found) if found else len(positions)
