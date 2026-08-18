@@ -20,8 +20,9 @@ traversal, and the frontier stops expanding once the limit is reached.
 from __future__ import annotations
 
 from collections import deque
-from collections.abc import Mapping
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
+from itertools import islice
 from typing import final
 
 from src.graph.models import GraphNode, GraphRelationship, KnowledgeGraph
@@ -29,7 +30,7 @@ from src.graph.models import GraphNode, GraphRelationship, KnowledgeGraph
 from .config import GraphRagSettings
 from .filters import query_predicate
 from .interfaces import ChunkSource
-from .models import Candidate, RetrievalQuery
+from .models import Candidate, Chunk, RetrievalQuery
 from .provenance import GraphPathStep, RetrievalEvidence, SeedReport
 from .types import MatchKind, RetrievalMethod, SeedStatus
 
@@ -165,9 +166,73 @@ class KnowledgeGraphRetriever:
         max_hops = query.max_hops if query.max_hops is not None else self._settings.max_hops
         reached = self._walk(tuple(seeds), max_hops)
 
-        admits = query_predicate(query)
-        candidates: list[Candidate] = []
+        return self._collect(reached, seeds, query_predicate(query), limit), reports
+
+    def _collect(
+        self,
+        reached: Mapping[str, tuple[int, tuple[GraphPathStep, ...]]],
+        seeds: Mapping[str, str],
+        admits: Callable[[Chunk], bool] | None,
+        limit: int,
+    ) -> tuple[Candidate, ...]:
+        """Return the candidates the walk produced, rationing the budget by hop.
+
+        The walk finds every node inside the hop bound; this decides which of
+        them the budget can afford. Spending it in walk order — every seed, then
+        every hop-1 neighbour, then whatever survives — lets one wide level
+        exhaust the budget before the next is read at all. That is not hop-2
+        evidence losing on score; it is hop-2 evidence never being scored, and
+        the corpus already holds nodes wide enough to cause it.
+
+        So each level is given a share instead:
+
+        * **Hop 0 is never rationed.** A seed is the direct answer to what was
+          asked, and there are only ever as many as the query named identifiers.
+        * **Every deeper level receives an equal share** of what remains.
+        * **Anything a level cannot spend goes back**, and the levels that still
+          have candidates take it in hop order.
+
+        The redistribution is what keeps a narrow graph whole: when no level
+        fills its share, every candidate is returned and the rationing has cost
+        nothing. A wide graph stays inside the same budget it always had — the
+        limit is shared differently, never raised.
+
+        The streams are generators, so the second pass resumes exactly where the
+        first stopped and no record is chunked twice. Order is by hop, as it has
+        always been, and the sort is stable, so two runs over one graph return
+        one answer.
+        """
+        levels: dict[int, list[tuple[str, int, tuple[GraphPathStep, ...]]]] = {}
         for node_id, (hops, path) in reached.items():
+            levels.setdefault(hops, []).append((node_id, hops, path))
+
+        streams = {
+            hops: self._candidates_of(entries, seeds, admits)
+            for hops, entries in sorted(levels.items())
+        }
+        collected: list[Candidate] = list(islice(streams.get(0, iter(())), limit))
+
+        deeper = [hops for hops in streams if hops > 0]
+        if deeper:
+            share = max(0, (limit - len(collected)) // len(deeper))
+            for hops in deeper:
+                collected.extend(islice(streams[hops], share))
+            for hops in streams:
+                if len(collected) >= limit:
+                    break
+                collected.extend(islice(streams[hops], limit - len(collected)))
+
+        collected.sort(key=lambda candidate: candidate.evidence[0].hops)
+        return tuple(collected[:limit])
+
+    def _candidates_of(
+        self,
+        entries: Sequence[tuple[str, int, tuple[GraphPathStep, ...]]],
+        seeds: Mapping[str, str],
+        admits: Callable[[Chunk], bool] | None,
+    ) -> Iterator[Candidate]:
+        """Yield every candidate one hop level produces, in walk order."""
+        for node_id, hops, path in entries:
             node = self._view.nodes.get(node_id)
             if node is None or node.provenance is None:
                 continue
@@ -175,25 +240,20 @@ class KnowledgeGraphRetriever:
             for chunk in self._chunks.chunks_of_record(node.provenance.record_id):
                 if admits is not None and not admits(chunk):
                     continue
-                candidates.append(
-                    Candidate(
-                        chunk=chunk,
-                        evidence=(
-                            RetrievalEvidence(
-                                method=RetrievalMethod.GRAPH,
-                                match_kind=kind,
-                                detail=f"node={node_id} hops={hops}",
-                                matched_entities=matched,
-                                graph_path=path,
-                                hops=hops,
-                                raw_score=1.0 / (1 + hops),
-                            ),
+                yield Candidate(
+                    chunk=chunk,
+                    evidence=(
+                        RetrievalEvidence(
+                            method=RetrievalMethod.GRAPH,
+                            match_kind=kind,
+                            detail=f"node={node_id} hops={hops}",
+                            matched_entities=matched,
+                            graph_path=path,
+                            hops=hops,
+                            raw_score=1.0 / (1 + hops),
                         ),
-                    )
+                    ),
                 )
-                if len(candidates) >= limit:
-                    return tuple(candidates), reports
-        return tuple(candidates), reports
 
     def _seeds(
         self,

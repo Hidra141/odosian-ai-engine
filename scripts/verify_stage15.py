@@ -71,8 +71,8 @@ CORPUS_BASELINE: Final[dict[str, dict[str, Any]]] = {
         "records": 1372,
     },
     "resources/knowledge/mitre/mitre.jsonl": {
-        "sha256": "7e87c0d1241408274ed483613f6d836f93f0b5025031ffc7ae9aaf6afca128dd",
-        "records": 2255,
+        "sha256": "5048dc66dad82108c79f2466230a83e45d4539bf5c1ae209f016a914b8bb51c9",
+        "records": 2269,
     },
     "resources/knowledge/sigma/sigma.jsonl": {
         "sha256": "4b22114d0286449830467802c3315fe84b4d5904d57cad1d6f52d17d362f6303",
@@ -87,7 +87,7 @@ Stage-15 — which they must not.
 """
 
 RANKING_BASELINE: Final[dict[str, str]] = {
-    "src/graphrag/ranking.py": "71f2548147d0036962bfc3a3aa453a63df1beb0aca86267301f04bdfcecce7f9",
+    "src/graphrag/ranking.py": "e7fee7f0ceefc70a74467403be1eed3c3b8682cfc3a75fb44183a44b9ad2a0e1",
     "src/graphrag/config.py": "af6acda42fee2c833e0fecf899a31f57dd514b4fdf99e3db11f46cd68f49b21b",
 }
 """Stage-13's ranking weights and retrieval configuration, which later stages must not touch.
