@@ -410,11 +410,17 @@ def test_generate_seeds_retrieval_with_the_requirement_alone():
 
 
 @pytest.mark.parametrize("operation", RULE_OPS, ids=lambda o: o.value)
-def test_a_rule_operation_seeds_retrieval_with_its_identifiers(operation):
+def test_a_rule_operation_seeds_retrieval_with_what_its_rule_resolved(operation):
+    """The contrast with generate, which has nothing resolved to seed with.
+
+    The fixture rule names no ATT&CK identifier, so it asks on its fields. What
+    matters here is that a rule operation reaches retrieval carrying something
+    its own rule established, which a requirement cannot.
+    """
     retriever = StubRetriever()
     pipeline, _ = pipeline_for(operation, retrieval=RetrievalService.of(retriever))
     pipeline.run(request_for(operation))
-    assert retriever.queries[0].entity_ids
+    assert retriever.queries[0].canonical_fields
 
 
 # --------------------------------------------------------------------------- runtime
@@ -742,24 +748,30 @@ def test_a_raw_query_extracts_entities():
     assert any(entity.value == "process.name" for entity in entities.entities)
 
 
-def test_a_raw_query_resolves_no_canonical_identifier_and_nothing_is_invented():
-    """Stage-09 records 'query' as the source field, so Stage-10 resolves nothing.
+def test_a_raw_query_resolves_its_fields_and_invents_no_identifier():
+    """Stage-09 states the field each value sat in, so Stage-10 can resolve it.
 
-    Retrieval falls back to the query text. This is asserted rather than worked
-    around: an engine that manufactured identifiers here would be inventing.
+    The fields are the query's own — it wrote them — and resolving them is
+    reading, not inventing. What stays empty is the identifier list: a bare
+    query names no technique, and manufacturing one would be inventing.
     """
     parsed = parsed_rule_from_query(raw_request())
     mappings = EntityMapper().map(EntityExtractor().extract(parsed))
     assert mappings.entities
-    assert mappings.resolved == ()
+    assert {item.canonical_field for item in mappings.resolved if item.canonical_field} == {
+        "process.name",
+        "process.command_line",
+    }
+    assert all(item.canonical_id is None for item in mappings.resolved)
 
 
-def test_a_raw_query_reaches_retrieval_on_its_text():
+def test_a_raw_query_reaches_retrieval_on_its_text_and_its_fields():
     pipeline, _, retriever = raw_query_pipeline()
     pipeline.run(raw_request())
     query = retriever.queries[0]
     assert query.text == RAW_QUERY
-    assert (query.entity_ids, query.canonical_fields) == ((), ())
+    assert query.entity_ids == ()
+    assert query.canonical_fields == ("process.name", "process.command_line")
     assert not query.is_empty
 
 
