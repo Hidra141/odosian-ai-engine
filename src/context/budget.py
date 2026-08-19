@@ -13,6 +13,15 @@ cut item is counted against the budget rather than pushing it over.
 
 No summarisation happens here. Shortening by meaning would be reasoning, which
 belongs to Stage-15 — this module only decides what fits.
+
+A cut that removes many items reports them as one warning rather than many. The
+report is per *reason*, not per item: a package whose entity section outgrew the
+budget by four thousand items produced four thousand warnings that differed only
+in an identifier nothing reads, saying the same three sentences over and over,
+and the account of the cut grew faster than the thing it was accounting for. The
+count is what a reader needs, so the count is what is kept, beside the first
+item it happened to. A reason that cut exactly one item still reads exactly as
+it did before.
 """
 
 from __future__ import annotations
@@ -23,9 +32,69 @@ from typing import Final, final
 
 from .exceptions import ContextBudgetExceededError
 from .models import ContextBudget, ContextItem, ContextSection, ContextWarning
-from .types import TruncationPolicy, WarningCode
+from .types import SectionName, TruncationPolicy, WarningCode
 
 TRUNCATION_MARKER: Final[str] = "\n[...truncated]"
+
+
+_Reason = tuple[str, "SectionName | None"]
+"""What makes two drops the same drop: one sentence, in one section."""
+
+
+def collapse_dropped(
+    warnings: Sequence[ContextWarning],
+) -> tuple[ContextWarning, ...]:
+    """Return the warnings with repeated drops of one reason stated once.
+
+    Only :attr:`~src.context.types.WarningCode.ITEM_DROPPED` is folded, and only
+    across warnings that already agree on their section *and* their reason. Two
+    sections starved by the same sentence stay two warnings, because which
+    section lost its evidence is the part a reader acts on.
+
+    Nothing else is touched. An unresolved reference names the value that failed
+    to resolve and the reason it did, so two of them are two different facts and
+    folding them would delete one; the same is true of every other code. Drops
+    are the exception because their reason comes from a closed set of three
+    sentences and the only thing that varies is an item identifier no stage
+    reads.
+
+    A reason that dropped one item is returned unchanged, so the common case is
+    byte-for-byte what it was. A reason that dropped several keeps the first item
+    it happened to and states how many followed. Order is the order the reasons
+    first occurred, so the same package always reports them the same way.
+    """
+    first: dict[_Reason, ContextWarning] = {}
+    counts: dict[_Reason, int] = {}
+    order: list[ContextWarning | _Reason] = []
+    for warning in warnings:
+        if warning.code is not WarningCode.ITEM_DROPPED:
+            order.append(warning)
+            continue
+        reason: _Reason = (warning.detail, warning.section)
+        if reason not in counts:
+            first[reason] = warning
+            counts[reason] = 1
+            order.append(reason)
+        else:
+            counts[reason] += 1
+    return tuple(
+        item
+        if isinstance(item, ContextWarning)
+        else _stated(first[item], counts[item])
+        for item in order
+    )
+
+
+def _stated(first: ContextWarning, count: int) -> ContextWarning:
+    """Return one warning standing for ``count`` drops of the same reason."""
+    if count == 1:
+        return first
+    return ContextWarning(
+        code=first.code,
+        detail=f"{first.detail} ({count} items, first {first.item_id})",
+        item_id=first.item_id,
+        section=first.section,
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,7 +121,8 @@ class BudgetEnforcer:
         """Return the sections reduced to fit, with a warning for every cut."""
         warnings: list[ContextWarning] = []
         capped = [self._cap_section(section, warnings) for section in sections]
-        return self._cap_total(capped, warnings)
+        outcome = self._cap_total(capped, warnings)
+        return BudgetOutcome(outcome.sections, collapse_dropped(outcome.warnings))
 
     def _cap_section(
         self,

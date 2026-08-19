@@ -17,8 +17,9 @@ dictionary insertion beyond the fixed section order.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import final
+from typing import Final, final
 
 from src.entities.models import ExtractedEntities
 from src.graphrag.models import RetrievalResult
@@ -45,9 +46,22 @@ from .types import (
     EvidencePriority,
     EvidenceStatus,
     SectionName,
+    WarningCode,
 )
 
 _FORBIDDEN_ATTRIBUTES = ("reveal", "_value")
+
+MAX_WARNING_SECTION_CHARS: Final[int] = 20_000
+"""The most the rendered warnings section may hold.
+
+The warnings section escapes the evidence budget so that a package can never
+save characters by hiding what it did. That exemption is about honesty, not
+about size, and without a ceiling of its own it let one rule render 1.6 million
+characters of accounting around 52,000 characters of evidence.
+
+The figure is a ceiling rather than a target. Nothing in the corpus approaches
+it once repeated drops are stated once: it exists for the package that would
+otherwise have no bound at all."""
 
 
 def rule_context_from_parsed(rule: ParsedRule) -> RuleContext:
@@ -159,6 +173,59 @@ class ContextBuilder:
                     f"{type(candidate).__name__} exposes a credential accessor",
                 )
 
+    def _warning_items(self, warnings: Sequence[ContextWarning]) -> tuple[ContextItem, ...]:
+        """Return the warnings rendered, up to the section's own ceiling.
+
+        Warnings are taken in the order they were raised and each is rendered
+        whole, so the cut falls between two of them and never inside one. The
+        closing notice is built after the loop from a count, which is why it
+        cannot itself be cut and cannot produce a further warning.
+
+        Room for that notice is set aside before the first warning is taken, so
+        the ceiling holds for the section as it is finally written rather than
+        for the section as it stood one line earlier. The reservation costs
+        nothing when every warning fits, because then no notice is written.
+        """
+        room = MAX_WARNING_SECTION_CHARS - len(self._notice(len(warnings)))
+        items: list[ContextItem] = []
+        used = 0
+        for index, warning in enumerate(warnings):
+            text = str(warning)
+            if used + len(text) > room:
+                break
+            items.append(self._warning_item(index, text, warning.code.value))
+            used += len(text)
+        omitted = len(warnings) - len(items)
+        if omitted:
+            items.append(
+                self._warning_item(
+                    len(items),
+                    self._notice(omitted),
+                    WarningCode.SECTION_BUDGET_EXCEEDED.value,
+                )
+            )
+        return tuple(items)
+
+    def _notice(self, omitted: int) -> str:
+        """Return the one line that stands for the warnings not shown."""
+        return (
+            f"{omitted} further warning(s) were raised and are not shown here; "
+            f"the section is limited to {MAX_WARNING_SECTION_CHARS} characters"
+        )
+
+    def _warning_item(self, index: int, text: str, code: str) -> ContextItem:
+        """Return one rendered line of the warnings section."""
+        return ContextItem(
+            item_id=f"{SectionName.WARNINGS.value}:{index:04d}",
+            section=SectionName.WARNINGS,
+            kind=EvidenceKind.WARNING,
+            text=text,
+            evidence_status=EvidenceStatus.NOT_APPLICABLE,
+            priority=EvidencePriority.UNSPECIFIED,
+            provenance=ItemProvenance(origin="stage14:budget"),
+            metadata={"code": code},
+        )
+
     def _with_reports(
         self,
         sections: tuple[ContextSection, ...],
@@ -171,26 +238,29 @@ class ContextBuilder:
         Both are built after budgeting so they describe the package as it
         finally stands, and neither is subject to the budget itself: a package
         that hid its own warnings to save characters would be misleading.
+
+        Escaping the budget is not licence to be unbounded. The account of a
+        package is worth less than the package, and a rule that produced enough
+        warnings to outweigh its own evidence would be handing a reader the
+        accounting instead of the answer. :data:`MAX_WARNING_SECTION_CHARS` is
+        where that stops. What is written is written whole — the section takes
+        warnings until the next one would not fit and then stops, so no line is
+        rendered half — and what is left out is counted in a single closing
+        notice.
+
+        That notice is written once, after the loop, and it is a rendered item
+        rather than a warning. A warning about warnings would be a warning, and
+        a package that answered a full warnings section by adding to it would
+        never finish.
+
+        Only the rendering is bounded. :attr:`ContextPackage.warnings` still
+        carries every warning the build produced, so nothing is lost to a caller
+        that reads them; what is bounded is what the prompt has to hold.
         """
         result = list(sections)
         if warnings:
             result.append(
-                ContextSection(
-                    name=SectionName.WARNINGS,
-                    items=tuple(
-                        ContextItem(
-                            item_id=f"{SectionName.WARNINGS.value}:{index:04d}",
-                            section=SectionName.WARNINGS,
-                            kind=EvidenceKind.WARNING,
-                            text=str(warning),
-                            evidence_status=EvidenceStatus.NOT_APPLICABLE,
-                            priority=EvidencePriority.UNSPECIFIED,
-                            provenance=ItemProvenance(origin="stage14:budget"),
-                            metadata={"code": warning.code.value},
-                        )
-                        for index, warning in enumerate(warnings)
-                    ),
-                )
+                ContextSection(name=SectionName.WARNINGS, items=self._warning_items(warnings))
             )
         result.append(
             ContextSection(
