@@ -71,8 +71,8 @@ CORPUS_BASELINE: Final[dict[str, dict[str, Any]]] = {
         "records": 1372,
     },
     "resources/knowledge/mitre/mitre.jsonl": {
-        "sha256": "18acdc967f63f8b83a96e12a6ff461783669964dd4176c9fe462c318c4621e9c",
-        "records": 2269,
+        "sha256": "81d73d635b7dc88234b313b6750c984ec1978aa4b456f30a7e9b724c4ce72a5d",
+        "records": 2270,
     },
     "resources/knowledge/sigma/sigma.jsonl": {
         "sha256": "4b22114d0286449830467802c3315fe84b4d5904d57cad1d6f52d17d362f6303",
