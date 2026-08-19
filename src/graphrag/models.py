@@ -59,6 +59,16 @@ class RetrievalQuery:
 
     Every field is optional except that at least one of ``text`` or
     ``entity_ids`` must carry something, so a query always states an intent.
+
+    A field can be named twice, in two vocabularies, because the two routes ask
+    different kinds of question. ``canonical_fields`` names the field the way
+    the corpus documents it, which is what a graph lookup and an ECS record can
+    answer to. ``lexical_fields`` names it the way the rule wrote it, which is
+    what the index actually holds: the corpus's Sigma records spell the field
+    ``CommandLine`` 1,366 times and ``process.command_line`` not once, so a
+    lexical question asked in ECS vocabulary is asked in a vocabulary those
+    records never use. Stating both lets each route ask in the vocabulary it can
+    be answered in, without either translating the other.
     """
 
     text: str = ""
@@ -70,16 +80,43 @@ class RetrievalQuery:
     max_results: int = 10
     mode: RetrievalMode = RetrievalMode.HYBRID
     max_hops: int | None = None
+    lexical_fields: tuple[str, ...] = ()
 
     @property
     def is_empty(self) -> bool:
-        """Return whether the query states nothing to look for."""
+        """Return whether the query states nothing to look for.
+
+        ``lexical_fields`` is not consulted. It is a second spelling of the
+        fields ``canonical_fields`` already names, never a field of its own, so
+        a query carrying one carries the other and asking about both here would
+        only assert that twice.
+        """
         return not self.text.strip() and not self.entity_ids and not self.canonical_fields
 
     @property
     def all_identifiers(self) -> tuple[str, ...]:
-        """Return the identifiers and fields the query names, in order."""
+        """Return the identifiers and fields the query names, in order.
+
+        The canonical vocabulary, and deliberately only that one. This is what
+        seeds the graph and what ranking compares a candidate's entities
+        against, and both need the name the corpus knows a field under: of the
+        Sigma spellings, exactly one names a node at all — the ATT&CK data
+        source called ``Image``, which is not the process-image field and is not
+        what a rule writing ``Image`` meant. The rule's own spellings reach the
+        lexical route through :attr:`lexical_vocabulary` and stop there.
+        """
         return (*self.entity_ids, *self.canonical_fields)
+
+    @property
+    def lexical_vocabulary(self) -> tuple[str, ...]:
+        """Return the field spellings the lexical route asks with.
+
+        The rule's own spellings when it stated them, and the canonical ones
+        otherwise. The fallback is what keeps every caller that predates this
+        distinction asking exactly what it asked before, including one that
+        builds a query by hand with a field list and nothing else.
+        """
+        return self.lexical_fields or self.canonical_fields
 
 
 @dataclass(frozen=True, slots=True)

@@ -28,6 +28,15 @@ alone. That is reported, not repaired: inventing a query from a Sigma body would
 be this layer translating a rule format, which is Stage-08's work and not done
 here.
 
+A rule's fields go out in two vocabularies, one per route. Stage-13's graph is
+keyed by what the corpus calls a field and its index holds what rules wrote, and
+for Sigma those are not the same string: the corpus spells the field
+``CommandLine`` in 1,366 of its own records and ``process.command_line`` in
+none. Asking both routes in one vocabulary means asking one of them in a
+vocabulary it cannot answer in. :func:`rule_query` therefore states the
+canonical name for the graph and the rule's own name for the index. Neither is
+derived from the other and neither replaces the other.
+
 Resolved and keyable are different questions, and only the second one seeds.
 Stage-10 resolves a severity because ``medium`` is a real member of a closed
 vocabulary; it resolves a private network because ``10.0.0.0/8`` is a real
@@ -43,9 +52,10 @@ raises where it happens.
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from collections.abc import Set as AbstractSet
 from pathlib import Path
+from types import MappingProxyType
 from typing import Final, final
 
 from src.context.models import RuleContext
@@ -107,6 +117,87 @@ identifier, and the absent records are a corpus gap recorded elsewhere.
 """
 
 
+SIGMA_FIELD_NAMES: Final[Mapping[str, str]] = MappingProxyType(
+    {
+        # Process image
+        "image": "process.executable",
+        "imagepath": "process.executable",
+        "newprocessname": "process.executable",
+        "parentimage": "process.parent.executable",
+        "parentprocessname": "process.parent.executable",
+        "originalfilename": "process.pe.original_file_name",
+        # Command line
+        "commandline": "process.command_line",
+        "processcommandline": "process.command_line",
+        "parentcommandline": "process.parent.command_line",
+        # File
+        "targetfilename": "file.path",
+        "sourcefilename": "file.path",
+        "filename": "file.name",
+        "targetdirectory": "file.directory",
+        "currentdirectory": "process.working_directory",
+        # Hash
+        "md5": "file.hash.md5",
+        "sha1": "file.hash.sha1",
+        "sha256": "file.hash.sha256",
+        "imphash": "file.pe.imphash",
+        # Registry
+        "targetobject": "registry.path",
+        "objectname": "registry.path",
+        "valuename": "registry.value",
+        "details": "registry.data.strings",
+        # Event
+        "eventid": "event.code",
+        "winlog.event_id": "event.code",
+        "provider_name": "event.provider",
+        "winlog.provider_name": "event.provider",
+        # Network
+        "destinationip": "destination.ip",
+        "sourceip": "source.ip",
+        "destinationport": "destination.port",
+        "sourceport": "source.port",
+        "destinationhostname": "destination.domain",
+        "queryname": "dns.question.name",
+        "protocol": "network.protocol",
+        # Identity
+        "user": "user.name",
+        "username": "user.name",
+        "subjectusername": "user.name",
+        "targetusername": "user.name",
+        "targetgroupname": "group.name",
+    }
+)
+"""The corpus's name for a field a rule format spells differently.
+
+Stage-10's alias table records that ``Image`` and ``process.executable`` occupy
+one role. It deliberately stops there — it is a table of names, not a schema,
+and it does not resolve anything against ECS. This is the other half: which ECS
+field documents the role that spelling names, so a question can go out in the
+vocabulary the corpus answers in.
+
+**Keyed on the spelling, not on the canonical type**, because a type is a role
+and a role spans several fields. ``Image`` and ``ParentImage`` share
+``PROCESS_IMAGE_FIELD`` while naming ``process.executable`` and
+``process.parent.executable``; ``NETWORK_FIELD`` alone spans seven ECS fields.
+The type cannot choose between them and the spelling can.
+
+Only names that mean exactly one ECS field are here. Four groups are left out
+on purpose, and each stays exactly as it behaves today:
+
+* ``source``, ``type`` and ``service`` name more than one role, and Stage-10
+  already refuses to choose between them.
+* ``channel`` and ``logname`` point at ``winlog.channel``, which this corpus
+  does not document as a field of its own.
+* ``hashes`` is a Sysmon composite carrying several digests at once, so no
+  single field answers for it.
+* ``scriptblocktext`` belongs to the ``powershell.*`` namespace, which is not
+  ECS.
+
+Every entry is checked against the corpus before it is used, so this table can
+widen what a rule asks about but can never invent a field.
+"""
+
+
 def _ordered(values: Iterable[str | None]) -> tuple[str, ...]:
     """Return the stated values without blanks or repeats, in first-seen order.
 
@@ -130,10 +221,25 @@ def rule_query(
     The fields are the ones Stage-10 resolved, together with the ones it could
     not resolve that name an ECS field anyway — see :func:`_asks_about_a_field`.
 
+    Those fields are then stated **twice**, because the two routes can only
+    answer in different vocabularies. The graph is keyed by what the corpus
+    calls a field, so it is asked with :func:`_ecs_name`'s answer. The index
+    holds what rules wrote, so it is asked with what this rule wrote. Both lists
+    come from one filtered stream and neither is derived from the other, so a
+    rule always asks about the same fields — it simply names them the way each
+    route can hear.
+
+    Nothing is unioned. A field reaches the graph under one name and the index
+    under one name, and where a rule already writes ECS — every Elastic rule —
+    the two names are the same string and the two lists are equal.
+
     ``ecs_fields`` is the set of field names the corpus documents, supplied by
     the service that read it. It defaults to empty, so a caller that has no
     corpus to hand asks exactly what it asked before.
     """
+    fields = tuple(
+        entity for entity in mappings if _asks_about_a_field(entity, ecs_fields)
+    )
     return RetrievalQuery(
         text=rule.query or "",
         entity_ids=_ordered(
@@ -141,13 +247,40 @@ def rule_query(
             for entity in mappings.resolved
             if entity.canonical_type in CORPUS_KEYED_TYPES
         ),
-        canonical_fields=_ordered(
-            entity.canonical_field
-            for entity in mappings
-            if _asks_about_a_field(entity, ecs_fields)
-        ),
+        canonical_fields=_ordered(_ecs_name(entity, ecs_fields) for entity in fields),
+        lexical_fields=_ordered(entity.canonical_field for entity in fields),
         max_results=top_k,
     )
+
+
+def _ecs_name(entity: MappedEntity, ecs_fields: AbstractSet[str]) -> str | None:
+    """Return the name the corpus knows this field under.
+
+    A rule writes the spelling its own format uses. Elastic writes ECS names, so
+    the two are the same string and nothing happens here. Sigma writes Windows
+    telemetry — ``Image``, ``CommandLine``, ``EventID`` — and the corpus holds no
+    record under any of them, so the question went out in a vocabulary nothing
+    could answer in: ``CommandLine`` resolved to nothing, and ``Image`` reached
+    the ATT&CK data source of that name rather than ``process.executable``.
+
+    :data:`SIGMA_FIELD_NAMES` supplies the corpus's name for a spelling it
+    documents under another. The translation is checked against the corpus
+    before it is used, so a table entry can never introduce a field the
+    knowledge base does not hold, and a corpus without ECS behaves exactly as it
+    did before.
+
+    Only the query is translated. The mapping keeps recording what the rule
+    wrote — its value, its source field, its modifiers and its canonical type
+    are all untouched — because that is what a reader needs to see the rule as
+    its author wrote it.
+    """
+    name = (entity.canonical_field or "").strip()
+    if not name:
+        return None
+    documented = SIGMA_FIELD_NAMES.get(name.lower())
+    if documented is not None and documented in ecs_fields:
+        return documented
+    return name
 
 
 def _asks_about_a_field(entity: MappedEntity, ecs_fields: AbstractSet[str]) -> bool:
