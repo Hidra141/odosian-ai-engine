@@ -12,6 +12,14 @@ place. The original labels remain in the rule's preserved raw document.
 Titles and descriptions are not extracted. They are prose about the rule rather
 than values the rule matches on, and turning sentences into entities would
 invent references the detection never made.
+
+A rule's ATT&CK references are tags in the sense that matters here — the same
+kind of value, mapped by the same mapper — but they are not always written in
+the tag list, and where a rule wrote one is not this layer's to round off. A
+reference Stage-08 read from a format's own ATT&CK section is reported as
+coming from that section, so a reader following the provenance of ``T1059.001``
+arrives at ``threat[0].technique[0].subtechnique[0]`` and finds it there. Only
+the ``tags`` list is ever reported as ``tags``.
 """
 
 from __future__ import annotations
@@ -92,6 +100,17 @@ class MetadataExtractor:
                 section=RuleSection.TAGS,
                 extractor=self.name,
             )
+        )
+        found.extend(
+            Entity(
+                entity_type=EntityType.TAG,
+                value=reference.identifier,
+                source_field="threat",
+                location=reference.location,
+                section=RuleSection.TAGS,
+                extractor=self.name,
+            )
+            for reference in rule.attack_references
         )
         found.extend(
             values_to_entities(

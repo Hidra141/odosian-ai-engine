@@ -10,7 +10,9 @@ empty rather than being filled by inference.
 The original rule survives parsing twice over — as the decoded document in
 :attr:`ParsedRule.raw` and as the untouched input in
 :attr:`ParsedRule.source_text` — so nothing downstream is forced to work from
-this model alone.
+this model alone. Surviving there is not the same as being read: ``raw`` is
+kept so a reader can go back to the source, and a section this model has no
+field for reaches no later stage.
 """
 
 from __future__ import annotations
@@ -113,6 +115,25 @@ class Condition:
 
 
 @dataclass(frozen=True, slots=True)
+class AttackReference:
+    """One ATT&CK identifier a rule states, and where the rule states it.
+
+    The location is kept beside the identifier because the two are only
+    together here. A rule format with a dedicated ATT&CK section states the
+    identifier in a place that is not its tag list, and a later stage reporting
+    it as a tag would describe a rule its author did not write.
+
+    The identifier is recorded as the rule spelled it. Nothing here decides
+    whether ``T1059.001`` is well-formed, what it names, or whether it exists:
+    identifier syntax belongs to Stage-10's reference mapper, which already
+    owns it, and the corpora that could answer the rest are Stage-11's.
+    """
+
+    identifier: str
+    location: str
+
+
+@dataclass(frozen=True, slots=True)
 class ParsedRule:
     """One detection rule, in unified structural form."""
 
@@ -126,6 +147,17 @@ class ParsedRule:
     false_positives: tuple[str, ...] = ()
     raw: RawDocument = field(default_factory=_empty_document, repr=False)
     source_text: str = field(default="", repr=False)
+    attack_references: tuple[AttackReference, ...] = ()
+    """The ATT&CK identifiers a format states outside its tag list.
+
+    Sigma writes them among its tags, so a Sigma rule states none here and
+    ``tags`` carries them as it always did. Elastic gives them a section of
+    their own, and before this field existed there was nowhere for that section
+    to go: it survived on :attr:`raw` and nothing read it.
+
+    Empty for every format that has no such section, which is what keeps a rule
+    parsed before this field existed identical to one parsed after.
+    """
 
     @property
     def title(self) -> str:
