@@ -7,6 +7,13 @@ and field names they named, because an identifier is the strongest lexical
 signal available: a chunk containing ``T1059.001`` is about T1059.001 whatever
 its prose says.
 
+The field names are taken in the vocabulary the *rule* wrote, not the one the
+corpus documents. This route matches strings against an index, so the only
+spelling that can find anything is the spelling the indexed records use, and a
+rule format's own names are what its records hold. A query naming no separate
+lexical vocabulary falls back to the canonical names, which is what every
+caller asked with before the two were told apart.
+
 Every hit records which terms matched and which of the query's identifiers
 appear in the chunk, so ranking never has to re-derive it and a reader can see
 why the chunk is here.
@@ -40,7 +47,7 @@ class LexicalTextRetriever:
         if not text.strip():
             return ()
 
-        identifiers = tuple(item.strip().lower() for item in query.all_identifiers if item.strip())
+        identifiers = tuple(item.strip().lower() for item in self._askable(query) if item.strip())
         candidates: list[Candidate] = []
         for chunk_id, score, matched in self.index.search(text, limit, query_predicate(query)):
             chunk = self.index.chunk(chunk_id)
@@ -68,8 +75,19 @@ class LexicalTextRetriever:
 
     def _query_text(self, query: RetrievalQuery) -> str:
         """Return the text sent to the index for a query."""
-        parts = [query.text, *query.entity_ids, *query.canonical_fields]
+        parts = [query.text, *self._askable(query)]
         return " ".join(part for part in parts if part and part.strip())
+
+    def _askable(self, query: RetrievalQuery) -> tuple[str, ...]:
+        """Return what this route may ask the index with, in query order.
+
+        The identifiers and the field names in the rule's own vocabulary. One
+        function rather than two expressions because the query text and the
+        identifier-presence check must ask with the same terms: a term that can
+        win a chunk on BM25 but is then not looked for in it would make the
+        evidence disagree with the score it produced.
+        """
+        return (*query.entity_ids, *query.lexical_vocabulary)
 
     def _identifiers_in(self, text: str, identifiers: tuple[str, ...]) -> tuple[str, ...]:
         """Return which of the query's identifiers appear in a chunk."""
