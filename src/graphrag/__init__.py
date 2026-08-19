@@ -30,6 +30,7 @@ Typical use::
 
 from __future__ import annotations
 
+from .attack_redirects import ATTACK_REDIRECTS, AttackRedirect, redirect_for
 from .chunking import RecordChunker, Segment, iter_chunks
 from .config import GraphRagSettings, RankingWeights
 from .exceptions import (
@@ -58,6 +59,7 @@ from .provenance import (
     RetrievalEvidence,
     RetrievalProvenance,
     SeedReport,
+    redirect_groups,
 )
 from .ranking import DeterministicRanker
 from .retriever import BuildReport, GraphRagRetriever
@@ -67,6 +69,8 @@ from .types import MatchKind, RetrievalMethod, RetrievalMode, SectionType, SeedS
 from .validation import RetrievalIssue, RetrievalValidationResult, RetrievalValidator
 
 __all__ = [
+    "ATTACK_REDIRECTS",
+    "AttackRedirect",
     "BuildReport",
     "Candidate",
     "CandidateFilter",
@@ -115,5 +119,7 @@ __all__ = [
     "by_section",
     "by_source",
     "iter_chunks",
+    "redirect_for",
+    "redirect_groups",
     "tokenize",
 ]

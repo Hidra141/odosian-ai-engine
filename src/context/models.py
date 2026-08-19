@@ -256,6 +256,13 @@ class PackageProvenance:
     sources_present: tuple[KnowledgeSource, ...] = ()
     unresolved_identifiers: tuple[str, ...] = ()
     ambiguous_identifiers: tuple[str, ...] = ()
+    redirected_identifiers: tuple[tuple[str, str], ...] = ()
+    """Each deprecated identifier the rule wrote, with the successor it reached.
+
+    Pairs rather than a flat list, because either half alone loses the fact: the
+    original says what the rule cited, the successor says what the corpus
+    answered with, and a redirect is the statement that those differ.
+    """
     entity_count: int = 0
     mapped_count: int = 0
 
@@ -270,6 +277,9 @@ class PackageProvenance:
                 "sources_present": ",".join(item.value for item in self.sources_present),
                 "unresolved_identifiers": ",".join(self.unresolved_identifiers),
                 "ambiguous_identifiers": ",".join(self.ambiguous_identifiers),
+                "redirected_identifiers": ",".join(
+                    f"{original}->{current}" for original, current in self.redirected_identifiers
+                ),
                 "entity_count": str(self.entity_count),
                 "mapped_count": str(self.mapped_count),
             }
@@ -362,4 +372,11 @@ class ContextPackage:
         """Return every item carrying an ambiguous identifier."""
         return tuple(
             item for item in self.items if item.evidence_status is EvidenceStatus.AMBIGUOUS
+        )
+
+    @property
+    def redirected_items(self) -> tuple[ContextItem, ...]:
+        """Return every item whose identifier reached a record through a successor."""
+        return tuple(
+            item for item in self.items if item.evidence_status is EvidenceStatus.REDIRECTED
         )

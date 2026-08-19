@@ -152,11 +152,36 @@ class ContextValidator:
                 )
 
     def _status_integrity(self, package: ContextPackage) -> Iterator[ContextIssue]:
-        """Yield an issue when an unresolved identifier is presented as settled."""
+        """Yield an issue when an unresolved identifier is presented as settled.
+
+        A redirected identifier is checked the same way and for the same reason.
+        It reached a record, but not the one the rule named, so an item that
+        declares ``redirected`` and then carries ``resolved`` would tell the
+        model the rule cited a technique it never cited. The successor must also
+        be present: a redirect that has lost the identifier it redirected *to*
+        is indistinguishable from a plain failure.
+        """
         for item in package.items:
             if item.kind is not EvidenceKind.SEED_RESOLUTION:
                 continue
             declared = item.metadata.get("status", "").strip().lower()
+            if declared == "redirected":
+                if item.evidence_status is not EvidenceStatus.REDIRECTED:
+                    yield ContextIssue(
+                        "redirected_reported_as_resolved",
+                        f"{item.item_id} declares redirected but carries "
+                        f"{item.evidence_status.value}",
+                    )
+                if not item.metadata.get("resolved_identifier", "").strip():
+                    yield ContextIssue(
+                        "redirect_successor_lost",
+                        f"{item.item_id} declares redirected but names no successor",
+                    )
+                if not item.metadata.get("identifier", "").strip():
+                    yield ContextIssue(
+                        "redirect_original_lost",
+                        f"{item.item_id} declares redirected but names no original identifier",
+                    )
             if declared == "unresolved" and item.evidence_status is not EvidenceStatus.UNRESOLVED:
                 yield ContextIssue(
                     "unresolved_reported_as_resolved",

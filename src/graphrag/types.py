@@ -71,3 +71,12 @@ class SeedStatus(StrEnum):
 
     AMBIGUOUS = "ambiguous"
     """Several nodes carry it. All are reported and none is chosen."""
+
+    REDIRECTED = "redirected"
+    """No node carries it, but ATT&CK revoked it in favour of one that a node does.
+
+    Deliberately not ``resolved``. The identifier the rule wrote reached nothing;
+    what reached a node is ATT&CK's own successor for it, and the two facts stay
+    apart. The report carries both identifiers, so no later stage has to guess
+    which one the rule actually named.
+    """

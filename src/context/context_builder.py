@@ -314,6 +314,7 @@ class ContextBuilder:
         items = candidates = 0
         unresolved: tuple[str, ...] = ()
         ambiguous: tuple[str, ...] = ()
+        redirected: tuple[tuple[str, str], ...] = ()
         if retrieval is not None:
             mode = retrieval.mode.value
             query_text = retrieval.query.text
@@ -326,6 +327,11 @@ class ContextBuilder:
             sources = tuple(seen)
             unresolved = tuple(seed.value for seed in retrieval.unresolved_seeds)
             ambiguous = tuple(seed.value for seed in retrieval.ambiguous_seeds)
+            redirected = tuple(
+                (seed.value, seed.resolved_value)
+                for seed in retrieval.redirected_seeds
+                if seed.resolved_value is not None
+            )
         return PackageProvenance(
             operation=operation,
             retrieval_mode=mode,
@@ -335,6 +341,7 @@ class ContextBuilder:
             sources_present=sources,
             unresolved_identifiers=unresolved,
             ambiguous_identifiers=ambiguous,
+            redirected_identifiers=redirected,
             entity_count=len(entities) if entities is not None else 0,
             mapped_count=len(mappings) if mappings is not None else 0,
         )

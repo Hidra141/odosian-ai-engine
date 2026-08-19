@@ -262,6 +262,12 @@ class EvidenceExtractor:
         This is where the corpus's honesty reaches the context. An identifier
         the graph could not resolve appears as an unresolved item, and one that
         matched several nodes appears with every candidate listed.
+
+        A deprecated identifier followed to ATT&CK's successor appears as a
+        *redirected* item naming both. It is neither of the two failures — a
+        record was reached — and it is not the success either, because the rule
+        never wrote the identifier that reached it. Reporting it as resolved
+        would tell the model the rule cited a technique it did not cite.
         """
         if result is None or not result.seeds:
             return EvidenceBatch()
@@ -271,12 +277,25 @@ class EvidenceExtractor:
             item_id = f"{SectionName.KNOWLEDGE.value}:{index:04d}"
             status = self._seed_status(seed.status)
             candidates = ", ".join(seed.node_ids) if seed.node_ids else "none"
+            via = f" -> {seed.resolved_value}" if seed.resolved_value else ""
             text = (
-                f"identifier {seed.value}: {seed.status} "
+                f"identifier {seed.value}{via}: {seed.status} "
                 f"(candidates: {candidates})"
                 + (f" — {seed.note}" if seed.note else "")
             )
-            if status is EvidenceStatus.UNRESOLVED:
+            if status is EvidenceStatus.REDIRECTED:
+                warnings.append(
+                    ContextWarning(
+                        code=WarningCode.REDIRECTED_REFERENCE,
+                        detail=(
+                            f"{seed.value} is deprecated; ATT&CK revoked it in favour of "
+                            f"{seed.resolved_value}, which the corpus holds"
+                        ),
+                        item_id=item_id,
+                        section=SectionName.KNOWLEDGE,
+                    )
+                )
+            elif status is EvidenceStatus.UNRESOLVED:
                 warnings.append(
                     ContextWarning(
                         code=WarningCode.UNRESOLVED_REFERENCE,
@@ -314,6 +333,7 @@ class EvidenceExtractor:
                         "status": seed.status,
                         "candidate_count": str(len(seed.node_ids)),
                         "candidates": ",".join(seed.node_ids),
+                        "resolved_identifier": seed.resolved_value or "",
                     },
                 )
             )
@@ -412,6 +432,8 @@ class EvidenceExtractor:
             return EvidenceStatus.RESOLVED
         if token == "ambiguous":
             return EvidenceStatus.AMBIGUOUS
+        if token == "redirected":
+            return EvidenceStatus.REDIRECTED
         return EvidenceStatus.UNRESOLVED
 
     def _rule_header(self, rule: RuleContext) -> str:

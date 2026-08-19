@@ -86,6 +86,15 @@ class EvidenceStatus(StrEnum):
     AMBIGUOUS = "ambiguous"
     """An identifier matched several records and none was chosen."""
 
+    REDIRECTED = "redirected"
+    """A deprecated identifier reached a record through ATT&CK's own successor.
+
+    Settled, because a record was reached, but not ``resolved``: the identifier
+    the rule wrote matched nothing, and what matched is the identifier ATT&CK
+    revoked it in favour of. Both are carried, so the distinction survives into
+    the prompt.
+    """
+
     NOT_APPLICABLE = "not_applicable"
     """The item carries no identifier for which resolution is meaningful."""
 
@@ -133,5 +142,6 @@ class WarningCode(StrEnum):
     ITEM_DROPPED = "item_dropped"
     UNRESOLVED_REFERENCE = "unresolved_reference"
     AMBIGUOUS_REFERENCE = "ambiguous_reference"
+    REDIRECTED_REFERENCE = "redirected_reference"
     CREDENTIAL_REDACTED = "credential_redacted"
     EMPTY_RETRIEVAL = "empty_retrieval"

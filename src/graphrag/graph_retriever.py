@@ -8,10 +8,17 @@ not scan 13,000 nodes.
 
 Seeding is the only place identifiers meet the graph, and it is where the
 corpus's honesty is preserved. An identifier that no node carries is reported
-unresolved and contributes nothing — ``T1562`` finds no node and no node is
-manufactured for it. An identifier several nodes carry is reported ambiguous
-with every candidate listed and **no seed chosen**, so ``M1013`` never silently
-becomes the enterprise one.
+unresolved and contributes nothing, and no node is manufactured for it. An
+identifier several nodes carry is reported ambiguous with every candidate listed
+and **no seed chosen**, so ``M1013`` never silently becomes the enterprise one.
+
+One narrow exception sits between those two, and it invents nothing either.
+Where ATT&CK has revoked an identifier in favour of exactly one successor the
+corpus already holds, the walk starts at that successor's node and the seed is
+reported ``redirected``, carrying both identifiers. ``T1562`` still finds no
+node of its own; what it finds is ``T1685``, which ATT&CK says is the same
+subject renumbered, and the report says exactly that rather than claiming the
+rule named ``T1685``. See :mod:`src.graphrag.attack_redirects`.
 
 Every walk is bounded by the configured hop limit. There is no unbounded
 traversal, and the frontier stops expanding once the limit is reached.
@@ -27,6 +34,7 @@ from typing import final
 
 from src.graph.models import GraphNode, GraphRelationship, KnowledgeGraph
 
+from .attack_redirects import redirect_for
 from .config import GraphRagSettings
 from .filters import query_predicate
 from .interfaces import ChunkSource
@@ -274,13 +282,10 @@ class KnowledgeGraphRetriever:
                 continue
             matches = self._view.by_identifier.get(token, [])
             if not matches:
-                reports.append(
-                    SeedReport(
-                        value=value,
-                        status=SeedStatus.UNRESOLVED.value,
-                        note="no node carries this identifier",
-                    )
-                )
+                report = self._redirected(value)
+                reports.append(report)
+                if report.status == SeedStatus.REDIRECTED.value:
+                    seeds.setdefault(report.node_ids[0], value)
                 continue
             if len(matches) > 1:
                 reports.append(
@@ -301,6 +306,81 @@ class KnowledgeGraphRetriever:
             )
             seeds.setdefault(matches[0], value)
         return seeds, tuple(reports)
+
+    def _redirected(self, value: str) -> SeedReport:
+        """Return the report for an identifier no node carries.
+
+        Unresolved is still the answer for almost everything, and it is the
+        answer this returns unless every condition for following a redirect
+        holds at once: ATT&CK revoked the identifier, it revoked it in favour of
+        exactly one successor, and exactly one node in *this* corpus carries
+        that successor.
+
+        Each failure is reported as what it is rather than collapsed into one
+        outcome. A revocation with several successors is **ambiguous** — the
+        candidates are listed and none is chosen, which is the same promise
+        :meth:`_seeds` already makes for an identifier several nodes carry. A
+        successor the corpus does not hold, or holds twice, leaves the reference
+        exactly where it was: reaching nothing, and saying so.
+
+        No node is created in any branch. A redirect is a way of looking up a
+        record the corpus already has, never a way of inventing one.
+        """
+        redirect = redirect_for(value)
+        if redirect is None:
+            return SeedReport(
+                value=value,
+                status=SeedStatus.UNRESOLVED.value,
+                note="no node carries this identifier",
+            )
+        if not redirect.is_one_to_one:
+            listed = ", ".join(redirect.successors)
+            return SeedReport(
+                value=value,
+                status=SeedStatus.AMBIGUOUS.value,
+                node_ids=self._nodes_of(redirect.successors),
+                note=(
+                    f"ATT&CK revoked this identifier in favour of {len(redirect.successors)} "
+                    f"identifiers ({listed}); none chosen"
+                ),
+            )
+        successor = redirect.successor
+        matches = self._view.by_identifier.get(successor.strip().lower(), [])
+        if not matches:
+            return SeedReport(
+                value=value,
+                status=SeedStatus.UNRESOLVED.value,
+                note=(
+                    f"no node carries this identifier; ATT&CK revoked it in favour of "
+                    f"{successor}, which no node carries either"
+                ),
+            )
+        if len(matches) > 1:
+            return SeedReport(
+                value=value,
+                status=SeedStatus.AMBIGUOUS.value,
+                node_ids=tuple(matches),
+                note=(
+                    f"ATT&CK revoked this identifier in favour of {successor}, which "
+                    f"{len(matches)} nodes carry; none chosen"
+                ),
+            )
+        return SeedReport(
+            value=value,
+            status=SeedStatus.REDIRECTED.value,
+            node_ids=(matches[0],),
+            note=f"ATT&CK revoked this identifier in favour of {successor}",
+            resolved_value=successor,
+        )
+
+    def _nodes_of(self, identifiers: Sequence[str]) -> tuple[str, ...]:
+        """Return every node any of a set of identifiers reaches, in first-seen order."""
+        found: list[str] = []
+        for identifier in identifiers:
+            for node_id in self._view.by_identifier.get(identifier.strip().lower(), []):
+                if node_id not in found:
+                    found.append(node_id)
+        return tuple(found)
 
     def _walk(
         self,
