@@ -16,7 +16,13 @@ from types import MappingProxyType
 
 from src.knowledge.models.types import KnowledgeSource
 
-from .provenance import ChunkProvenance, RetrievalEvidence, RetrievalProvenance, SeedReport
+from .provenance import (
+    ChunkProvenance,
+    RetrievalEvidence,
+    RetrievalProvenance,
+    SeedReport,
+    redirect_groups,
+)
 from .types import RetrievalMethod, RetrievalMode, SectionType
 
 
@@ -236,6 +242,26 @@ class RetrievalResult:
     def ambiguous_seeds(self) -> tuple[SeedReport, ...]:
         """Return the query entities that matched several nodes."""
         return tuple(item for item in self.seeds if item.status == "ambiguous")
+
+    @property
+    def redirected_seeds(self) -> tuple[SeedReport, ...]:
+        """Return the deprecated entities that reached a node through a successor.
+
+        Kept apart from :attr:`unresolved_seeds` and from the resolved ones. The
+        identifier the query named matched nothing, so it is not resolved; a
+        record was nevertheless reached, so it is not unresolved either.
+        """
+        return tuple(item for item in self.seeds if item.status == "redirected")
+
+    @property
+    def redirect_groups(self) -> tuple[tuple[str, tuple[str, ...]], ...]:
+        """Return each successor with every deprecated identifier that reached it.
+
+        Several deprecated identifiers may name one current technique, and the
+        graph seeds its node once. This keeps the multiplicity readable: see
+        :func:`~src.graphrag.provenance.redirect_groups`.
+        """
+        return redirect_groups(self.seeds)
 
     def of_source(self, source: KnowledgeSource) -> tuple[RetrievalItem, ...]:
         """Return the items from one source, in rank order."""

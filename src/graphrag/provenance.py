@@ -102,16 +102,53 @@ class RetrievalEvidence:
 
 @dataclass(frozen=True, slots=True)
 class SeedReport:
-    """What a query entity resolved to in the graph."""
+    """What a query entity resolved to in the graph.
+
+    ``value`` is always the identifier the caller asked with, unchanged. When a
+    deprecated ATT&CK reference was followed to its current successor,
+    ``resolved_value`` names that successor and the status is ``redirected``;
+    the two are stated separately so neither can stand in for the other.
+    """
 
     value: str
     status: str
     node_ids: tuple[str, ...] = ()
     note: str = ""
+    resolved_value: str | None = None
+    """The current identifier a redirected seed reached, or ``None``.
+
+    Set only for a redirected seed. A resolved seed leaves it ``None`` because
+    the identifier that reached the node is already ``value``, and repeating it
+    would make a redirect and a direct hit look alike.
+    """
 
     def __str__(self) -> str:
         """Return the seed rendered for a report line."""
-        return f"{self.value} -> {self.status} ({len(self.node_ids)} nodes)"
+        via = f" via {self.resolved_value}" if self.resolved_value else ""
+        return f"{self.value} -> {self.status}{via} ({len(self.node_ids)} nodes)"
+
+
+def redirect_groups(seeds: Sequence[SeedReport]) -> tuple[tuple[str, tuple[str, ...]], ...]:
+    """Return each current identifier with every deprecated one that reached it.
+
+    This is where the collapse stays visible. ``T1562``, ``T1562.001`` and
+    ``T1562.006`` all redirect to ``T1685``; the graph seeds that node once,
+    which is correct, but a reader of the result must still be able to tell
+    three original references collapsed into one node from a rule that named
+    ``T1685`` and nothing else. Grouping the reports answers that without
+    consulting the rule again.
+
+    Groups are ordered by successor and originals in first-seen order, so two
+    runs over one result describe it identically.
+    """
+    grouped: dict[str, list[str]] = {}
+    for seed in seeds:
+        if seed.resolved_value is None:
+            continue
+        originals = grouped.setdefault(seed.resolved_value, [])
+        if seed.value not in originals:
+            originals.append(seed.value)
+    return tuple((current, tuple(grouped[current])) for current in sorted(grouped))
 
 
 @dataclass(frozen=True, slots=True)
