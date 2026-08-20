@@ -461,10 +461,32 @@ def test_the_corpus_still_holds_no_node_for_a_deprecated_identifier(corpus_retri
     assert node_id == "mitre:Technique:enterprise:T1685"
 
 
-def test_ta0112_is_still_absent_from_the_corpus(corpus_retriever):
+def test_ta0112_resolves_to_the_real_tactic_and_not_through_a_redirect(corpus_retriever):
+    """TA0112 is a record now, and it must be reached as one.
+
+    Until the corpus carried the Defense Impairment tactic this asserted the
+    opposite — that ``TA0112`` reached nothing — because the point was that the
+    redirect layer had not invented a tactic to fill the gap. The corpus now
+    holds the authoritative record, so the negative invariant is obsolete; what
+    replaces it is the same guarantee stated positively. ``TA0112`` resolves the
+    ordinary way, to the ordinary node, and the redirect table is still not
+    involved in how it got there.
+    """
     result = corpus_retriever.retrieve(RetrievalQuery(text="probe", entity_ids=("TA0112",)))
-    assert result.seeds[0].status == SeedStatus.UNRESOLVED.value
-    assert result.seeds[0].resolved_value is None
+    report = result.seeds[0]
+
+    assert report.status == SeedStatus.RESOLVED.value
+    assert report.status != SeedStatus.REDIRECTED.value
+    assert report.node_ids == ("mitre:Tactic:enterprise:TA0112",)
+
+    # Resolved, so nothing stood in for it: a successor is a redirect's field alone.
+    assert report.resolved_value is None
+    assert result.redirected_seeds == ()
+
+    # And the table still says nothing about it, in either direction.
+    assert redirect_for("TA0112") is None
+    assert "TA0112" not in ATTACK_REDIRECTS
+    assert "TA0112" not in {s for v in ATTACK_REDIRECTS.values() for s in v}
 
 
 def test_the_real_corpus_collapse_keeps_all_three_originals(corpus_retriever):
