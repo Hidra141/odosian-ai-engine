@@ -59,6 +59,7 @@ from .provenance import (
     RetrievalEvidence,
     RetrievalProvenance,
     SeedReport,
+    SuccessorRecord,
     redirect_groups,
 )
 from .ranking import DeterministicRanker
@@ -113,6 +114,7 @@ __all__ = [
     "SectionType",
     "SeedReport",
     "SeedStatus",
+    "SuccessorRecord",
     "Segment",
     "TextIndex",
     "TextRetriever",
