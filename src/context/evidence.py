@@ -22,6 +22,7 @@ from typing import Final, final
 
 from src.entities.models import ExtractedEntities
 from src.graphrag.models import RetrievalItem, RetrievalResult
+from src.graphrag.provenance import SeedReport
 from src.graphrag.types import RetrievalMethod
 from src.mapping.models import MappedEntities
 from src.mapping.types import MappingStatus
@@ -337,7 +338,74 @@ class EvidenceExtractor:
                     },
                 )
             )
+            successor = self._successor_item(seed, index)
+            if successor is not None:
+                items.append(successor)
+                if successor.metadata.get("redacted"):
+                    warnings.append(
+                        ContextWarning(
+                            code=WarningCode.CREDENTIAL_REDACTED,
+                            detail=(
+                                f"redacted {successor.metadata['redacted']} in the record "
+                                f"{seed.value} was redirected to"
+                            ),
+                            item_id=successor.item_id,
+                            section=SectionName.KNOWLEDGE,
+                        )
+                    )
         return EvidenceBatch(tuple(items), tuple(warnings))
+
+    def _successor_item(self, seed: SeedReport, index: int) -> ContextItem | None:
+        """Return the successor's own record as an item, when a seed was redirected.
+
+        The seed line says a redirect happened; this says what the rule's
+        reference now *means*. Both are needed, and only the second carries the
+        successor's description, its name and the tactic the corpus files it
+        under.
+
+        It is a separate item rather than more text on the seed line because it
+        is a different kind of thing: the seed line is Stage-13's account of a
+        lookup, this is a knowledge record, and the budget, the organizer and
+        any reader should be able to treat them as such.
+
+        Its status is ``redirected``, never ``resolved``. The record is real,
+        but the rule never named it, and an item claiming otherwise would be the
+        silent rewrite this whole layer exists to avoid.
+        """
+        record = seed.resolved_record
+        if record is None:
+            return None
+        safe, fired = redact(record.text)
+        return ContextItem(
+            item_id=f"{SectionName.KNOWLEDGE.value}:{index:04d}:successor",
+            section=SectionName.KNOWLEDGE,
+            kind=EvidenceKind.RETRIEVED_GRAPH,
+            text=safe,
+            source=record.source,
+            source_id=record.identifier,
+            evidence_status=EvidenceStatus.REDIRECTED,
+            priority=EvidencePriority.GRAPH,
+            provenance=ItemProvenance(
+                source=record.source,
+                source_id=record.identifier,
+                parent_record_id=record.record_id,
+                chunk_id=record.chunk_ids[0] if record.chunk_ids else "",
+                dataset_location=record.location,
+                retrieval_methods=(RetrievalMethod.GRAPH.value,),
+                matched_entities=(seed.value, record.identifier),
+                hops=0,
+                origin="stage13:redirect_successor",
+            ),
+            metadata={
+                "identifier": seed.value,
+                "status": seed.status,
+                "resolved_identifier": record.identifier,
+                "successor_name": record.name,
+                "successor_record": record.record_id,
+                "successor_chunks": ",".join(record.chunk_ids),
+                "redacted": ", ".join(fired),
+            },
+        )
 
     def from_references(self, rule: RuleContext) -> EvidenceBatch:
         """Return one item per reference the rule itself states.

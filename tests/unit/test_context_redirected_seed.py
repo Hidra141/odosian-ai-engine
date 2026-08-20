@@ -39,8 +39,9 @@ from src.context.types import (
 )
 from src.context.validation import ContextValidator
 from src.graphrag.models import RetrievalQuery, RetrievalResult
-from src.graphrag.provenance import SeedReport
+from src.graphrag.provenance import SeedReport, SuccessorRecord
 from src.graphrag.types import RetrievalMode
+from src.knowledge.models.types import KnowledgeSource
 
 CONVERTER = EvidenceExtractor()
 BUILDER = ContextBuilder()
@@ -300,3 +301,150 @@ def test_a_redirect_is_not_carried_as_an_unresolved_uncertainty():
         ContextOperation.ANALYZE, rule=RULE, retrieval=result(redirected(), unresolved())
     )
     assert [entry.identifier for entry in uncertain_identifiers(package)] == ["T9999"]
+
+
+# ----------------------------------- the successor's own record in context (Phase 15)
+
+
+def successor_record(identifier: str = "T1685", name: str = "Disable or Modify Tools"):
+    """Return the successor record Stage-13 attaches to a redirected seed."""
+    return SuccessorRecord(
+        record_id=f"mitre:enterprise:{identifier}",
+        identifier=identifier,
+        name=name,
+        text=(
+            f"{identifier} \u2014 {name}\n\nTechnique: {name} ({identifier})\n"
+            "Domain: ENTERPRISE\nTactic(s): Defense Impairment (TA0112)\n"
+            "Description: Adversaries may modify or disable security tools."
+        ),
+        chunk_ids=(f"mitre:enterprise:{identifier}:description:001",),
+        source=KnowledgeSource.MITRE,
+        location="mitre.jsonl:2270:description[0:180]",
+    )
+
+
+def redirected_with_record(original: str = "T1562.001", successor: str = "T1685") -> SeedReport:
+    """Return a redirected report carrying the successor's own record."""
+    base = redirected(original, successor)
+    return SeedReport(
+        value=base.value,
+        status=base.status,
+        node_ids=base.node_ids,
+        note=base.note,
+        resolved_value=base.resolved_value,
+        resolved_record=successor_record(successor),
+    )
+
+
+def successor_items(batch):
+    """Return the successor-record items of a batch."""
+    return [i for i in batch.items if i.provenance.origin == "stage13:redirect_successor"]
+
+
+def test_a_redirected_seed_with_a_record_emits_the_successor_evidence():
+    batch = CONVERTER.from_seeds(result(redirected_with_record()))
+    found = successor_items(batch)
+    assert len(found) == 1
+    assert found[0].kind is EvidenceKind.RETRIEVED_GRAPH
+    assert found[0].section is SectionName.KNOWLEDGE
+
+
+def test_the_successor_evidence_carries_the_record_text():
+    item = successor_items(CONVERTER.from_seeds(result(redirected_with_record())))[0]
+    assert "Disable or Modify Tools" in item.text
+    assert "Defense Impairment (TA0112)" in item.text
+    assert "Description:" in item.text
+
+
+def test_the_successor_evidence_is_redirected_not_resolved():
+    """It is a real record, but the rule never named it."""
+    item = successor_items(CONVERTER.from_seeds(result(redirected_with_record())))[0]
+    assert item.evidence_status is EvidenceStatus.REDIRECTED
+    assert item.evidence_status is not EvidenceStatus.RESOLVED
+    assert not item.evidence_status.is_resolved
+
+
+def test_the_successor_evidence_names_both_identifiers_apart():
+    item = successor_items(CONVERTER.from_seeds(result(redirected_with_record())))[0]
+    assert item.metadata["identifier"] == "T1562.001"
+    assert item.metadata["resolved_identifier"] == "T1685"
+    assert item.metadata["successor_name"] == "Disable or Modify Tools"
+    assert item.provenance.matched_entities == ("T1562.001", "T1685")
+    assert item.provenance.parent_record_id == "mitre:enterprise:T1685"
+
+
+def test_the_seed_line_and_the_successor_record_are_separate_items():
+    batch = CONVERTER.from_seeds(result(redirected_with_record()))
+    knowledge = seed_items(batch)
+    assert len(knowledge) == 2
+    assert [i.kind for i in knowledge] == [
+        EvidenceKind.SEED_RESOLUTION,
+        EvidenceKind.RETRIEVED_GRAPH,
+    ]
+    assert len({i.item_id for i in knowledge}) == 2
+
+
+def test_a_redirect_without_a_record_emits_no_successor_evidence():
+    assert successor_items(CONVERTER.from_seeds(result(redirected()))) == []
+
+
+def test_a_resolved_seed_emits_no_successor_evidence():
+    assert successor_items(CONVERTER.from_seeds(result(resolved()))) == []
+
+
+def test_an_unresolved_seed_emits_no_successor_evidence():
+    assert successor_items(CONVERTER.from_seeds(result(unresolved()))) == []
+
+
+def test_the_successor_evidence_reaches_the_built_package():
+    package = BUILDER.build(
+        ContextOperation.ANALYZE, rule=RULE, retrieval=result(redirected_with_record())
+    )
+    texts = [i.text for i in package.items if i.provenance.origin == "stage13:redirect_successor"]
+    assert len(texts) == 1
+    assert "Disable or Modify Tools" in texts[0]
+    assert "Defense Impairment (TA0112)" in texts[0]
+
+
+def test_the_package_still_names_the_original_as_the_redirected_identifier():
+    package = BUILDER.build(
+        ContextOperation.ANALYZE, rule=RULE, retrieval=result(redirected_with_record())
+    )
+    assert package.provenance is not None
+    assert package.provenance.redirected_identifiers == (("T1562.001", "T1685"),)
+    assert package.provenance.unresolved_identifiers == ()
+
+
+def test_the_successor_evidence_raises_no_extra_warning():
+    """One redirect, one warning. The record is evidence, not a second problem."""
+    batch = CONVERTER.from_seeds(result(redirected_with_record()))
+    assert [w.code for w in batch.warnings] == [WarningCode.REDIRECTED_REFERENCE]
+
+
+def test_a_successor_record_holding_a_credential_is_redacted_and_announced():
+    seed = SeedReport(
+        value="T1562.001",
+        status="redirected",
+        node_ids=("mitre:Technique:enterprise:T1685",),
+        resolved_value="T1685",
+        resolved_record=SuccessorRecord(
+            record_id="mitre:enterprise:T1685",
+            identifier="T1685",
+            name="Disable or Modify Tools",
+            text="api_key: AKIAIOSFODNN7EXAMPLE and more prose",
+            chunk_ids=("mitre:enterprise:T1685:description:001",),
+            source=KnowledgeSource.MITRE,
+            location="mitre.jsonl:2270:description[0:40]",
+        ),
+    )
+    batch = CONVERTER.from_seeds(result(seed))
+    item = successor_items(batch)[0]
+    assert "AKIAIOSFODNN7EXAMPLE" not in item.text
+    assert WarningCode.CREDENTIAL_REDACTED in {w.code for w in batch.warnings}
+
+
+def test_the_package_validator_accepts_the_successor_evidence():
+    package = BUILDER.build(
+        ContextOperation.ANALYZE, rule=RULE, retrieval=result(redirected_with_record())
+    )
+    assert VALIDATOR.validate(package).issues == ()

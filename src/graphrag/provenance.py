@@ -101,6 +101,50 @@ class RetrievalEvidence:
 
 
 @dataclass(frozen=True, slots=True)
+class SuccessorRecord:
+    """The knowledge record a redirected seed reached, carried beside the report.
+
+    A redirected seed reaches a real record, and the reader of the result needs
+    to know what that record *says*, not merely that it exists. Ranking cannot
+    be relied on to deliver it: a redirected seed's node is a graph seed rather
+    than an exact identifier match — correctly, because it does not carry the
+    identifier the rule wrote — so it forfeits the two heaviest components and
+    is outscored by any lexical hit. It is the best *graph* candidate and still
+    loses the merged top-k.
+
+    So the record travels with the seed instead of competing for a slot. This
+    changes nothing about what retrieval returned: the ranked items, the
+    candidate counts and the walk are all exactly what they were. It only means
+    the successor's own knowledge cannot be dropped on the way to the context.
+    """
+
+    record_id: str
+    """The knowledge record's id, so the text can always be traced back."""
+
+    identifier: str
+    """The successor's ATT&CK identifier — the current one, never the rule's."""
+
+    name: str
+    """What the successor is called, e.g. ``Disable or Modify Tools``."""
+
+    text: str = field(repr=False)
+    """The record's own text, as the corpus states it."""
+
+    chunk_ids: tuple[str, ...] = ()
+    """The chunks the text was assembled from, in document order."""
+
+    source: KnowledgeSource | None = None
+    """The dataset the record belongs to."""
+
+    location: str = ""
+    """Where the text sits in that dataset, so the item can be traced home."""
+
+    def __str__(self) -> str:
+        """Return the successor rendered for a report line."""
+        return f"{self.identifier} {self.name!r} ({self.record_id})"
+
+
+@dataclass(frozen=True, slots=True)
 class SeedReport:
     """What a query entity resolved to in the graph.
 
@@ -120,6 +164,15 @@ class SeedReport:
     Set only for a redirected seed. A resolved seed leaves it ``None`` because
     the identifier that reached the node is already ``value``, and repeating it
     would make a redirect and a direct hit look alike.
+    """
+
+    resolved_record: SuccessorRecord | None = None
+    """The successor's own knowledge record, when the seed was redirected.
+
+    Set only alongside :attr:`resolved_value`, and for the same reason it
+    exists: see :class:`SuccessorRecord`. A resolved seed leaves it ``None``,
+    because an identifier the corpus carries scores an exact-identifier match
+    and its record reaches the result on its own.
     """
 
     def __str__(self) -> str:

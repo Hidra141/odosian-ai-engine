@@ -39,7 +39,7 @@ from .config import GraphRagSettings
 from .filters import query_predicate
 from .interfaces import ChunkSource
 from .models import Candidate, Chunk, RetrievalQuery
-from .provenance import GraphPathStep, RetrievalEvidence, SeedReport
+from .provenance import GraphPathStep, RetrievalEvidence, SeedReport, SuccessorRecord
 from .types import MatchKind, RetrievalMethod, SeedStatus
 
 
@@ -371,6 +371,33 @@ class KnowledgeGraphRetriever:
             node_ids=(matches[0],),
             note=f"ATT&CK revoked this identifier in favour of {successor}",
             resolved_value=successor,
+            resolved_record=self._record_of(matches[0], successor),
+        )
+
+    def _record_of(self, node_id: str, identifier: str) -> SuccessorRecord | None:
+        """Return the successor node's own knowledge record, or ``None``.
+
+        Read from the same chunk source the walk already retrieves from, so
+        this is the record the corpus holds rather than a second copy of it.
+        Nothing is created: a node without provenance, or one whose record the
+        index holds no chunk for, yields ``None`` and the redirect simply
+        carries no record.
+        """
+        node = self._view.nodes.get(node_id)
+        if node is None or node.provenance is None:
+            return None
+        chunks = self._chunks.chunks_of_record(node.provenance.record_id)
+        if not chunks:
+            return None
+        first = chunks[0]
+        return SuccessorRecord(
+            record_id=node.provenance.record_id,
+            identifier=identifier,
+            name=(node.name or identifier).strip(),
+            text="\n\n".join(chunk.text for chunk in chunks),
+            chunk_ids=tuple(chunk.chunk_id for chunk in chunks),
+            source=first.source,
+            location=first.provenance.location if first.provenance else "",
         )
 
     def _nodes_of(self, identifiers: Sequence[str]) -> tuple[str, ...]:

@@ -494,3 +494,111 @@ def test_the_real_corpus_collapse_keeps_all_three_originals(corpus_retriever):
         RetrievalQuery(text="probe", entity_ids=("T1562", "T1562.001", "T1562.006"))
     )
     assert result.redirect_groups == (("T1685", ("T1562", "T1562.001", "T1562.006")),)
+
+
+# ------------------------------------------- the successor's own record (Phase 15)
+
+
+def test_a_redirected_seed_carries_the_successor_record():
+    """Phase 14 found the successor's own knowledge never reached the context.
+
+    It is the best *graph* candidate and still loses the merged top-k, because a
+    redirected seed is deliberately not an exact-identifier match. The record
+    therefore travels on the report rather than competing for a slot.
+    """
+    report = one_report([technique("T1685", name="Disable or Modify Tools")], "T1562.001")
+    record = report.resolved_record
+
+    assert record is not None
+    assert record.identifier == "T1685"
+    assert record.name == "Disable or Modify Tools"
+    assert record.record_id == "mitre:Technique:enterprise:T1685"
+    assert record.chunk_ids == ("mitre:Technique:enterprise:T1685:chunk",)
+    assert record.text
+
+
+def test_a_resolved_seed_carries_no_successor_record():
+    """An identifier the corpus holds reaches its own record on merit."""
+    assert one_report([technique("T1685")], "T1685").resolved_record is None
+
+
+def test_an_unresolved_seed_carries_no_successor_record():
+    assert one_report([technique("T1685")], "T9998").resolved_record is None
+
+
+def test_an_ambiguous_redirect_carries_no_successor_record(monkeypatch):
+    """Nothing was chosen, so there is no successor record to carry."""
+    monkeypatch.setattr(
+        "src.graphrag.attack_redirects.ATTACK_REDIRECTS",
+        {"T1562": ("T1685", "T1686")},
+    )
+    report = one_report([technique("T1685"), technique("T1686")], "T1562")
+    assert report.status == SeedStatus.AMBIGUOUS.value
+    assert report.resolved_record is None
+
+
+def test_the_successor_record_does_not_change_what_retrieval_returned():
+    """The record rides along; it never becomes a candidate or a returned item."""
+    candidates, _ = seed([technique("T1685")], ["T1562.001"])
+    assert [item.chunk.chunk_id for item in candidates] == [
+        "mitre:Technique:enterprise:T1685:chunk"
+    ]
+    assert candidates[0].evidence[0].match_kind is MatchKind.GRAPH_SEED
+    assert "T1562.001" not in candidates[0].evidence[0].matched_entities
+
+
+def test_the_successor_record_names_the_current_identifier_only():
+    """It describes the successor, so it must not claim the rule's identifier."""
+    record = one_report([technique("T1685")], "T1562.001").resolved_record
+    assert record is not None
+    assert record.identifier == "T1685"
+    assert record.identifier != "T1562.001"
+
+
+# ----------------------------------------- successor record against the real corpus
+
+
+def test_the_real_corpus_supplies_the_successor_record(corpus_retriever):
+    result = corpus_retriever.retrieve(RetrievalQuery(text="probe", entity_ids=("T1562.001",)))
+    record = result.seeds[0].resolved_record
+
+    assert record is not None
+    assert record.identifier == "T1685"
+    assert record.name == "Disable or Modify Tools"
+    assert record.record_id == "mitre:enterprise:T1685"
+    assert "Disable or Modify Tools" in record.text
+    assert "Defense Impairment (TA0112)" in record.text
+
+
+@pytest.mark.parametrize(("original", "successor"), sorted(AUTHORISED.items()))
+def test_every_authorised_redirect_supplies_its_successor_record(
+    corpus_retriever, original, successor
+):
+    result = corpus_retriever.retrieve(RetrievalQuery(text="probe", entity_ids=(original,)))
+    record = result.seeds[0].resolved_record
+    assert record is not None
+    assert record.identifier == successor
+    assert record.text.startswith(successor)
+
+
+def test_the_successor_record_never_enters_the_query_vocabulary(corpus_retriever):
+    """The whole point: the rule's words are untouched by what it redirected to."""
+    query = RetrievalQuery(
+        text="probe",
+        entity_ids=("T1562.001",),
+        canonical_fields=("process.name",),
+        lexical_fields=("Image",),
+    )
+    result = corpus_retriever.retrieve(query)
+    assert result.seeds[0].resolved_record is not None
+
+    asked = (*query.entity_ids, *query.canonical_fields, *query.lexical_fields,
+             *query.all_identifiers, *query.lexical_vocabulary, query.text)
+    assert all("T1685" not in item for item in asked)
+
+
+def test_ta0112_still_carries_no_successor_record(corpus_retriever):
+    result = corpus_retriever.retrieve(RetrievalQuery(text="probe", entity_ids=("TA0112",)))
+    assert result.seeds[0].status == SeedStatus.RESOLVED.value
+    assert result.seeds[0].resolved_record is None
+    assert redirect_for("TA0112") is None
