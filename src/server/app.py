@@ -130,7 +130,7 @@ async def lifespan(app: FastAPI):
         root_dir,
         dotenv_path=dotenv_path if dotenv_path.exists() else None,
     )
-    _state.config = EngineConfig.from_mapping(config_data, root_dir)
+    _state.config = config_data.config
 
     dummy_secret = Secret("LLM_API_KEY", "server-managed")
     from src.application.provider_factory import provider_from_config
