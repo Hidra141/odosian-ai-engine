@@ -1,0 +1,41 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Virtual environment & Caches
+.venv/
+venv/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Testing & Linting Caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.benchmarks/
+.coverage
+htmlcov/
+
+# Secrets & Environment files
+.env
+.env*
+!.env.example
+
+# IDE & Editor Settings
+.vscode/
+.idea/
+.claude/
+
+# Packaging & Build outputs
+*.egg-info/
+dist/
+build/
+eggs/
+*.egg
+
+# OS artifacts
+.DS_Store
+Thumbs.db

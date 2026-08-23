@@ -80,6 +80,31 @@ def _identifier_keys(node: GraphNode) -> tuple[str, ...]:
     return tuple(dict.fromkeys(key.strip().lower() for key in keys if key and key.strip()))
 
 
+def _exact_identifier_keys(node: GraphNode) -> tuple[str, ...]:
+    """Return strings that identify this node as an exact identifier, lower-cased."""
+    keys = [node.id, node.canonical_id, node.source_id]
+    attack_id = node.properties.get("attackId")
+    if attack_id:
+        keys.append(attack_id)
+    return tuple(dict.fromkeys(key.strip().lower() for key in keys if key and key.strip()))
+
+
+def _match_kind(node: GraphNode, hops: int, query_tokens: set[str]) -> MatchKind:
+    """Return why a graph candidate matched.
+
+    A candidate receives EXACT_IDENTIFIER only when it is a direct seed (hops == 0)
+    and the query explicitly named one of its true identifier keys (id, canonical_id,
+    source_id, attackId). Matches based only on name/alias, partial matches, or
+    neighbours (hops > 0) never receive EXACT_IDENTIFIER.
+    """
+    if hops > 0:
+        return MatchKind.GRAPH_NEIGHBOUR
+    exact_keys = _exact_identifier_keys(node)
+    if any(key in query_tokens for key in exact_keys):
+        return MatchKind.EXACT_IDENTIFIER
+    return MatchKind.GRAPH_SEED
+
+
 @final
 class KnowledgeGraphRetriever:
     """Retrieves chunks by walking the knowledge graph."""
@@ -115,12 +140,16 @@ class KnowledgeGraphRetriever:
         max_hops = query.max_hops if query.max_hops is not None else self._settings.max_hops
         reached = self._walk(seeds, max_hops)
 
+        query_tokens = {
+            item.strip().lower() for item in query.all_identifiers if item and item.strip()
+        }
         admits = query_predicate(query)
         candidates: list[Candidate] = []
         for node_id, (hops, path) in reached.items():
             node = self._view.nodes.get(node_id)
             if node is None or node.provenance is None:
                 continue
+            match_kind = _match_kind(node, hops, query_tokens)
             for chunk in self._chunks.chunks_of_record(node.provenance.record_id):
                 if admits is not None and not admits(chunk):
                     continue
@@ -130,9 +159,7 @@ class KnowledgeGraphRetriever:
                         evidence=(
                             RetrievalEvidence(
                                 method=RetrievalMethod.GRAPH,
-                                match_kind=(
-                                    MatchKind.GRAPH_SEED if hops == 0 else MatchKind.GRAPH_NEIGHBOUR
-                                ),
+                                match_kind=match_kind,
                                 detail=f"node={node_id} hops={hops}",
                                 matched_entities=(node.canonical_id,),
                                 graph_path=path,

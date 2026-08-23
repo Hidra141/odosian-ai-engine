@@ -1,0 +1,22 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: odosian-ai-engine:latest
+    container_name: odosian-ai-engine
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      - ODOSIAN_ENVIRONMENT=${ODOSIAN_ENVIRONMENT:-development}
+      - ODOSIAN_LOG_LEVEL=${ODOSIAN_LOG_LEVEL:-INFO}
+      - ODOSIAN_MODEL_PROVIDER=${ODOSIAN_MODEL_PROVIDER:-gemini}
+      - ODOSIAN_LLM_API_KEY=${ODOSIAN_LLM_API_KEY:-}
+    volumes:
+      # Optional: bind mount source code for live development inside container
+      - ./src:/app/src:ro
+      - ./configs:/app/configs:ro
+      - ./prompts:/app/prompts:ro
+      - ./tests:/app/tests:ro
+    command: pytest

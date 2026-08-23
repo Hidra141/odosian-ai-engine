@@ -113,6 +113,27 @@ class ModelSettings:
             thinking_level=as_optional_enum(section, "thinking_level", ThinkingLevel),
         )
 
+    def with_overrides(
+        self,
+        *,
+        provider: str | None = None,
+        name: str | None = None,
+        max_output_tokens: int | None = None,
+        temperature: float | None = None,
+    ) -> ModelSettings:
+        """Return a copy with selected fields replaced by per-request values."""
+        return ModelSettings(
+            provider=provider if provider is not None else self.provider,
+            name=name if name is not None else self.name,
+            temperature=temperature if temperature is not None else self.temperature,
+            top_p=self.top_p,
+            max_output_tokens=max_output_tokens if max_output_tokens is not None else self.max_output_tokens,
+            timeout_seconds=self.timeout_seconds,
+            max_retries=self.max_retries,
+            retry_backoff_seconds=self.retry_backoff_seconds,
+            thinking_level=self.thinking_level,
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class LoggingSettings:
