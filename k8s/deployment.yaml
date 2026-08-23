@@ -17,6 +17,7 @@ spec:
       containers:
         - name: engine
           image: odosian-ai-engine:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 8000
               protocol: TCP
