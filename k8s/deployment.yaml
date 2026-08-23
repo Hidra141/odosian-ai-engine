@@ -30,6 +30,14 @@ spec:
               value: "json"
             - name: ODOSIAN_LOG_OUTPUT
               value: "stdout"
+            # Satisfies configs/security.yaml's required_secrets check at
+            # startup. Never used for a real LLM call — every request builds
+            # its own provider from the api_key/baseUrl/model it carries
+            # (see provider_from_request / Pipeline.with_provider); this one
+            # only backs the placeholder provider Pipeline.create() needs to
+            # build the pipeline object before any request has arrived.
+            - name: ODOSIAN_LLM_API_KEY
+              value: "server-managed"
           resources:
             requests:
               memory: "512Mi"
