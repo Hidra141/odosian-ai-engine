@@ -371,9 +371,10 @@ RULE_SPEC: Final[ObjectSpec] = ObjectSpec(
             name="query",
             kind=FieldKind.STRING,
             description=(
-                "The complete query, on a single line. Reference only fields the supplied "
+                "The complete query. Reference only fields the supplied "
                 "material confirms exist."
             ),
+            allow_multiline=True,
         ),
         FieldSpec(
             name="severity",
@@ -461,7 +462,8 @@ ORIGINAL_RULE_SPEC: Final[ObjectSpec] = ObjectSpec(
         FieldSpec(
             name="query",
             kind=FieldKind.STRING,
-            description="The supplied rule's query, copied exactly, on a single line.",
+            description="The supplied rule's query, copied exactly.",
+            allow_multiline=True,
         ),
     ),
 )
