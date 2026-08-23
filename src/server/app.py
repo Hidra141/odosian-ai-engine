@@ -259,7 +259,7 @@ async def _run_pipeline_sse(
         yield f"event: error\ndata: {json.dumps(error_body)}\n\n"
 
 
-@app.post("/api/v1/analyze")
+@app.post("/api/v1/analyze", response_model=None)
 async def analyze(body: AnalyzeBody, request: Request) -> StreamingResponse | JSONResponse:
     kwargs = dict(
         user_id=body.user_id,
@@ -280,7 +280,7 @@ async def analyze(body: AnalyzeBody, request: Request) -> StreamingResponse | JS
         return _error_response(e)
 
 
-@app.post("/api/v1/enhance")
+@app.post("/api/v1/enhance", response_model=None)
 async def enhance(body: EnhanceBody, request: Request) -> StreamingResponse | JSONResponse:
     kwargs = dict(
         user_id=body.user_id,
@@ -299,7 +299,7 @@ async def enhance(body: EnhanceBody, request: Request) -> StreamingResponse | JS
         return _error_response(e)
 
 
-@app.post("/api/v1/generate")
+@app.post("/api/v1/generate", response_model=None)
 async def generate(body: GenerateBody, request: Request) -> StreamingResponse | JSONResponse:
     kwargs = dict(
         user_id=body.user_id,
