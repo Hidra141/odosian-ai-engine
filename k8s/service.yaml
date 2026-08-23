@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: odosian-engine
+  labels:
+    app: odosian-engine
+spec:
+  type: ClusterIP
+  selector:
+    app: odosian-engine
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP

@@ -1,0 +1,95 @@
+// ============================================================================
+// QUERY LANGUAGES REFERENCE
+// ============================================================================
+// WHAT: Odosian supports exactly four detection query languages — matching
+// every language Elastic Security itself supports. This file covers: how
+// each is stored, how it's labeled in the UI, how it maps onto Elastic's
+// wire format, and how the query TEXT gets formatted for display.
+//
+// SOURCES:
+//   src/lib/push-to-elastic.ts        (mapLanguage function)
+//   src/components/ui/code-block.tsx  (formatDetectionQuery function)
+//   src/lib/validation.ts             (the strict language enum)
+// ============================================================================
+
+{
+  "supportedValues": ["kuery", "eql", "lucene", "esql"],
+
+  "kuery": {
+    "storedAs": "kuery",
+    "displayLabel": "\"KQL\" almost everywhere in the UI, but the rule-creation form's dropdown specifically labels it \"KQL (Kuery)\"",
+    "elasticWireFormat": "kuery",
+    "description": "Kibana Query Language, Elastic's default query syntax — field:value with and/or/not boolean operators.",
+    "aliasHandling": "mapLanguage() also accepts the raw input value \"kql\" and normalizes it to \"kuery\". Odosian itself always STORES \"kuery\", never \"kql\" — but tolerates \"kql\" as an input.",
+    "defaultForNewRules": true
+  },
+
+  "eql": {
+    "storedAs": "eql",
+    "displayLabel": "EQL",
+    "elasticWireFormat": "eql",
+    "description": "Event Query Language — Elastic's sequence/process-tree-aware syntax, commonly used for process-relationship detections (parent/child chains).",
+    "ruleTypeInteraction": "mapRuleType() forces the Elastic rule TYPE to \"eql\" if EITHER ruleType===\"eql\" OR language===\"eql\" — language alone is enough to force it, even if ruleType says something else."
+  },
+
+  "lucene": {
+    "storedAs": "lucene",
+    "displayLabel": "Lucene",
+    "elasticWireFormat": "lucene",
+    "description": "Raw Apache Lucene query syntax — the lowest-level, most permissive option.",
+    "note": "This is the one language OMITTED from the quick-filter chip row on the AI Analysis Center's rule picker (chips are [\"kuery\", \"eql\", \"esql\"] only). Lucene rules can still be selected and analyzed normally — they just aren't reachable via that specific filter chip."
+  },
+
+  "esql": {
+    "storedAs": "esql",
+    "displayLabel": "ES|QL",
+    "elasticWireFormat": "esql",
+    "description": "Elasticsearch's piped, SQL-like language: FROM ... | WHERE ... | STATS ... | EVAL ...",
+    "ruleTypeInteraction": "mapRuleType() forces the Elastic rule TYPE to \"esql\" if EITHER ruleType===\"esql\" OR language===\"esql\".",
+    "formattingIsSpecial": "This is the ONLY language with a dedicated formatting rule — see 'formatDetectionQuery' below, rule #3."
+  },
+
+  // --------------------------------------------------------------------
+  // mapLanguage() — normalizes any input language value before sending to Elastic
+  // --------------------------------------------------------------------
+  "mapLanguage_function": {
+    "sourceFile": "src/lib/push-to-elastic.ts",
+    "exactSource": [
+      "function mapLanguage(lang: string): string {",
+      "  const map: Record<string, string> = {",
+      "    kuery: \"kuery\",",
+      "    kql: \"kuery\",",
+      "    eql: \"eql\",",
+      "    esql: \"esql\",",
+      "    lucene: \"lucene\",",
+      "  };",
+      "  return map[lang.toLowerCase()] || \"kuery\";",
+      "}"
+    ],
+    "behavior": "Case-insensitive (lowercases input first). ANY unrecognized value silently falls back to \"kuery\" — this is a defensive default, not a thrown validation error."
+  },
+
+  // --------------------------------------------------------------------
+  // formatDetectionQuery() — how a query TEXT is visually formatted for display
+  // --------------------------------------------------------------------
+  "formatDetectionQuery_function": {
+    "sourceFile": "src/components/ui/code-block.tsx",
+    "whenApplied": "Only when <CodeBlock formatQuery={true} /> is used — every place a detection query is displayed for human reading (rule detail, analysis results, enhancement before/after comparison). The unformatted raw string is still what gets copied to clipboard / sent to Elastic — formatting is purely visual.",
+    "shortQueryException": "Queries under 40 characters are returned COMPLETELY UNCHANGED.",
+    "exactSource": [
+      "function formatDetectionQuery(code: string): string {",
+      "  if (!code || code.length < 40) return code;",
+      "  return code",
+      "    .replace(/\\s+(and|or|not)\\s+/gi, (_, kw) => `\\n  ${kw} `)",
+      "    .replace(/\\s*\\|\\s*/g, \"\\n| \")",
+      "    .replace(/\\s*(from|where|stats|eval|keep|drop|sort|limit|rename|dissect|grok|enrich|mv_expand)\\s+/gi, (_, kw) => `\\n${kw} `);",
+      "}"
+    ],
+    "threeRulesAppliedInOrder": [
+      "1. Every 'and' / 'or' / 'not' keyword gets a newline + 2-space indent before it. Applies to ALL languages (this is what makes long KQL/EQL boolean chains readable).",
+      "2. Any pipe character '|' gets a newline before it, pipe kept, followed by a space. Applies to ALL languages that use pipes (ES|QL primarily, but any pipe anywhere triggers it).",
+      "3. ES|QL-specific: a newline is inserted before any of these command keywords when they appear as a whole word: from, where, stats, eval, keep, drop, sort, limit, rename, dissect, grok, enrich, mv_expand."
+    ],
+    "importantNote": "There is NO if/else branching on the 'language' field inside this function. All three regex passes run UNCONDITIONALLY on every query string, regardless of language. The different visual result per language comes purely from which patterns happen to exist in that language's syntax — e.g. an ES|QL query gets BOTH rule 2 (pipe splitting) AND rule 3 (keyword splitting) applied to it, since it has both pipes and command keywords."
+  }
+}

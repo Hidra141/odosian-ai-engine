@@ -25,7 +25,9 @@ from typing import Final
 from src.config.exceptions import InvalidConfigValueError, MissingSecretError
 from src.config.secrets import Secret
 from src.config.settings import EngineConfig
+from src.llm.anthropic_provider import AnthropicProvider
 from src.llm.gemini_provider import PROVIDER_NAME, GeminiProvider
+from src.llm.openai_provider import OpenAICompatibleProvider
 from src.llm.provider import LLMProvider
 
 API_KEY_SECRET: Final[str] = "LLM_API_KEY"
@@ -44,3 +46,29 @@ def provider_from_config(config: EngineConfig, secrets: Mapping[str, Secret]) ->
     if secret is None:
         raise MissingSecretError(API_KEY_SECRET)
     return GeminiProvider(api_key=secret)
+
+
+def _is_anthropic(base_url: str) -> bool:
+    """Return whether a base URL points to the Anthropic API."""
+    return "anthropic.com" in base_url.lower()
+
+
+def provider_from_request(
+    *,
+    api_key: str,
+    base_url: str,
+    model: str,
+) -> LLMProvider:
+    """Build a provider from per-request parameters sent by the Odosian web app.
+
+    Auto-detects the provider type from the base URL:
+    - URLs containing ``anthropic.com`` → Anthropic adapter
+    - Everything else → OpenAI-compatible adapter
+    """
+    if _is_anthropic(base_url):
+        return AnthropicProvider(api_key=api_key, model_name=model)
+    return OpenAICompatibleProvider(
+        api_key=api_key,
+        base_url=base_url,
+        model_name=model,
+    )

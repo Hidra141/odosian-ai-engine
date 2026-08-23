@@ -19,10 +19,14 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
+    "anthropic>=0.40.0",
+    "fastapi>=0.115.0",
     "google-genai>=1.0.0",
     "jsonschema>=4.23",
+    "openai>=1.50.0",
     "python-dotenv>=1.0.1",
     "pyyaml>=6.0.1",
+    "uvicorn[standard]>=0.30.0",
 ]
 
 [project.optional-dependencies]

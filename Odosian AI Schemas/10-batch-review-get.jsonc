@@ -1,0 +1,41 @@
+// ============================================================================
+// BATCH REVIEW (GET) RESULT
+// ============================================================================
+// WHAT: Every proposed enhancement in an enhance-batch, pending human
+// review before being bulk-applied. ENHANCE BATCHES ONLY — not applicable
+// to analyze or post_enhance batches.
+//
+// WHEN: User opens the review screen for a completed enhance batch.
+//
+// ENDPOINT: GET /api/analysis/batch/[id]/review   (status 200)
+// SOURCE:   src/app/api/analysis/batch/[id]/review/route.ts
+// ============================================================================
+
+{
+  "batchId": "d1e2f3a4-5b6c-7d8e-9f0a-1b2c3d4e5f6a",
+
+  "items": [
+    {
+      "itemId": "bi1",           // the batch item id
+      "analysisId": "a10",       // the underlying enhance Analysis row
+      "ruleId": "r10",
+      "ruleTitle": "Brute Force Login Attempts",
+
+      "originalQuery": "event.action: \"user_login\" and event.outcome: \"failure\"",   // from analysis.inputQuery — the query as it was BEFORE enhancement
+      "originalSeverity": "medium",                                                       // the rule's severity AT REVIEW TIME
+      "currentQuery": "event.action: \"user_login\" and event.outcome: \"failure\"",     // the rule's CURRENT query at review time — may differ from originalQuery if something else changed it since
+
+      "enhancedQuery": "event.action: \"user_login\" and event.outcome: \"failure\" | stats count() by source.ip, user.name | where count() >= 5",   // defaults to "" if the AI didn't return one
+      "enhancedTitle": "Brute Force Login Attempts (Threshold-Based)",
+      "enhancedDescription": "Detects 5 or more failed logins from the same source IP against the same user within the rule's evaluation window.",
+      "newSeverity": "high",       // falls back to the rule's CURRENT severity if the AI didn't propose a change
+      "newRiskScore": 68,          // falls back to the rule's CURRENT riskScore if the AI didn't propose a change
+      "changelog": [
+        { "change": "Added a count threshold via stats/where", "reason": "Original rule fired on every single failed login, generating excessive noise" }
+      ],
+
+      "applied": false,   // true if rule.query already equals enhance.enhancedQuery (i.e. this specific item has already been applied)
+      "deployed": false   // true ONLY if applied AND the rule also has an elasticRuleId (pushed to Elastic since being applied)
+    }
+  ]
+}

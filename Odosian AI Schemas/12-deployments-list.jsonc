@@ -1,0 +1,42 @@
+// ============================================================================
+// DEPLOYMENTS LIST RESULT
+// ============================================================================
+// WHAT: A history of Elastic push/pull actions. IMPORTANT: there is NO
+// dedicated "Deployment" database table — this is synthesized on the fly by
+// querying AuditLog rows whose action matches one of the four values below,
+// and parsing each row's JSON "details" blob.
+//
+// DEPLOYMENT ACTION VALUES:
+//   "RULE_PUSHED_TO_ELASTIC" | "RULE_UPDATED_IN_ELASTIC" |
+//   "RULE_PULLED_FROM_ELASTIC" | "RULE_DELETED_FROM_ELASTIC"
+//
+// WHEN: User opens the "Deployments" tab on the Shield Analysis History page.
+//
+// ENDPOINT: GET /api/audit/deployments   (status 200)
+// SOURCE:   src/app/api/audit/deployments/route.ts
+// CONSUMED BY: src/components/deployment-list.tsx
+// ============================================================================
+
+{
+  "deployments": [
+    {
+      "id": "al-9001",                       // the underlying AuditLog row's id
+      "action": "RULE_PUSHED_TO_ELASTIC",    // one of the four values listed above
+      "ruleId": "1bdc1065-5bd4-4dd6-a6df-c111d643ff90",   // from AuditLog.targetId
+      "ruleTitle": "Suspicious Parent Process Execution via Console Window Host Proxy (Parent Process Verified)",  // or the literal "(deleted rule)" if it no longer exists
+      "user": "Mohd Alkafaween",             // display name of who performed the action
+      "elasticRuleId": "odosian-1bdc1065-5bd4-4dd6-a6df-c111d643ff90",   // from details.elasticRuleId, null if not applicable
+      "connectionName": "Primary Kibana",    // from details.connectionName
+      "enabled": true,                       // from details.enabled
+      "duplicated": false,                   // from details.duplicated, defaults to false
+      "createdAt": "2026-07-24T09:20:00.000Z"
+    }
+  ],
+
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 1,
+    "totalPages": 1
+  }
+}

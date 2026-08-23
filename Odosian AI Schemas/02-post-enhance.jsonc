@@ -1,0 +1,112 @@
+// ============================================================================
+// POST-ENHANCEMENT ANALYSIS RESULT
+// ============================================================================
+// WHAT: The EXACT SAME endpoint and response shape as 01-analyze.jsonc.
+// The only difference is what you SEND it: postEnhancement=true plus the
+// enhanced query text, so the AI re-scores the freshly-enhanced query
+// instead of whatever is currently saved on the rule.
+//
+// IMPORTANT: analysis.analysisType in the DB/response is still the literal
+// string "analyze" — NOT "post_enhance". The "Post-Enhancement" label you
+// see in the UI history table is applied client-side based on context
+// (that this analysis followed an enhance operation), not a distinct
+// backend record type.
+//
+// WHEN: User clicks "Analyze After Enhancement" right after an Enhance result
+// is shown, to independently verify the AI's own rewrite actually improved
+// the rule before committing to it.
+//
+// ENDPOINT: POST /api/analysis/analyze   (status 201, same route as Analyze)
+// SOURCE:   src/app/api/analysis/analyze/route.ts
+//
+// REQUEST BODY (note: query is the ENHANCED text, sent explicitly — not
+// re-read from the DB, so it scores exactly what would be applied):
+//   {
+//     "ruleId": "uuid",
+//     "query": "<the enhanced query text>",
+//     "postEnhancement": true
+//   }
+// ============================================================================
+
+{
+  "analysis": {
+    "id": "80ea7075-5585-4f0f-914a-f643b4c8c3f2",
+    "ruleId": "1bdc1065-5bd4-4dd6-a6df-c111d643ff90",
+    "analysisType": "analyze",   // still literally "analyze", not "post_enhance" — see note above
+    "inputQuery": "process where host.os.type == \"windows\" and event.type == \"start\" and (process.name : \"cmd.exe\" or process.name : \"powershell.exe\") and process.args : \"--headless\" and process.command_line : (\"*powershell*\", \"*cmd *\", \"*cmd.exe *\", \"*script*\") and not process.parent.name : \"conhost.exe\"",
+    "outputQuery": "",
+
+    // Score jumped dramatically because this is re-analyzing the IMPROVED
+    // query from the Enhance step, not the original weak one.
+    "score": 95,
+    "rating": "A+",
+    "fpRisk": "low",
+    "feedback": "The enhanced query now correctly anchors detection to a verified parent-process relationship, with a well-scoped exclusion for the most common benign path. Remaining gaps are narrow and represent genuine fine-tuning rather than structural flaws.",
+
+    "strengths": [
+      "Parent-process relationship is now explicitly verified",
+      "Explorer.exe false-positive path is excluded",
+      "Encoded-command detection is preserved from the original",
+      "Investigation guide matches the new logic",
+      "MITRE mapping confidence rose substantially across all three techniques"
+    ],
+    "weaknesses": [
+      "Exclusion list is not exhaustive for every legitimate admin tool",
+      "Still vulnerable to sophisticated multi-hop process indirection",
+      "No correlation with process-injection telemetry as a secondary signal"
+    ],
+
+    // Only 3 findings remain, none critical — qualitatively different from
+    // the original analysis's logic-breaking defects.
+    "findings": [
+      {
+        "category": "false_positive",
+        "severity": "medium",
+        "title": "Incomplete exclusion list",
+        "detail": "Only explorer.exe is excluded as a benign parent; other common admin tools may still trigger false positives."
+      },
+      {
+        "category": "detection_gap",
+        "severity": "low",
+        "title": "Obfuscation gap",
+        "detail": "Heavily obfuscated command lines that avoid the plaintext substrings entirely are still not caught."
+      },
+      {
+        "category": "coverage_gap",
+        "severity": "low",
+        "title": "Parent-matching edge case",
+        "detail": "A two-hop process chain (grandparent-to-conhost) is not covered by the single-level parent check."
+      }
+    ],
+    "suggestions": [
+      {
+        "priority": 1,
+        "title": "Expand exclusion list",
+        "description": "Add additional known-benign parent processes used by approved admin tooling.",
+        "codeSnippet": "and not process.parent.name : (\"explorer.exe\", \"taskeng.exe\", \"mmc.exe\")"
+      }
+    ],
+    "evasionRisks": [
+      {
+        "technique": "Process-chain indirection",
+        "description": "An attacker inserting an extra intermediary process defeats the single-hop parent check.",
+        "mitigation": "Consider a process-ancestry (multi-hop) check rather than a direct parent comparison."
+      }
+    ],
+
+    // Confidence rose across every mapping compared to the original analysis
+    // (T1036: 70->85, both T1059 sub-techniques: 65->90) — this is the
+    // measurable, independently-verified improvement from the enhancement.
+    "mitreMappings": [
+      { "tacticId": "TA0005", "tacticName": "Defense Evasion", "techniqueId": "T1036", "techniqueName": "Masquerading", "subTechniqueId": null, "subTechniqueName": null, "confidence": 85 },
+      { "tacticId": "TA0002", "tacticName": "Execution", "techniqueId": "T1059", "techniqueName": "Command and Scripting Interpreter", "subTechniqueId": "T1059.001", "subTechniqueName": "PowerShell", "confidence": 90 },
+      { "tacticId": "TA0002", "tacticName": "Execution", "techniqueId": "T1059", "techniqueName": "Command and Scripting Interpreter", "subTechniqueId": "T1059.003", "subTechniqueName": "Windows Command Shell", "confidence": 90 }
+    ],
+
+    "modelUsed": "gemini-2.5-flash",
+    "tokensUsed": 3120,
+    "latencyMs": 9400,
+    "userId": "8a9ffc32-8495-4a25-a616-362d90f35dcc",
+    "createdAt": "2026-07-24T09:15:30.000Z"
+  }
+}

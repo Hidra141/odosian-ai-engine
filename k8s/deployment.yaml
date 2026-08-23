@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: odosian-engine
+  labels:
+    app: odosian-engine
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: odosian-engine
+  template:
+    metadata:
+      labels:
+        app: odosian-engine
+    spec:
+      containers:
+        - name: engine
+          image: odosian-ai-engine:latest
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          env:
+            - name: ODOSIAN_ENVIRONMENT
+              value: "production"
+            - name: ODOSIAN_LOG_LEVEL
+              value: "INFO"
+            - name: ODOSIAN_LOG_FORMAT
+              value: "json"
+            - name: ODOSIAN_LOG_OUTPUT
+              value: "stdout"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5

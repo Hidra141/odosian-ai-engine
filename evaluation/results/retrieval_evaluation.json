@@ -1,0 +1,4083 @@
+{
+  "ablations": {
+    "full": {
+      "aggregate": {
+        "mrr": 0.819798,
+        "ndcg": {
+          "1": 0.77551,
+          "10": 0.648568,
+          "3": 0.701083,
+          "5": 0.687199
+        },
+        "precision": {
+          "1": 0.8,
+          "10": 0.34,
+          "3": 0.485714,
+          "5": 0.417143
+        },
+        "recall": {
+          "1": 0.224598,
+          "10": 0.297335,
+          "3": 0.247563,
+          "5": 0.256472
+        }
+      },
+      "cases_scored": 35
+    },
+    "no_entity_match": {
+      "aggregate": {
+        "mrr": 0.819798,
+        "ndcg": {
+          "1": 0.77551,
+          "10": 0.648568,
+          "3": 0.701083,
+          "5": 0.687199
+        },
+        "precision": {
+          "1": 0.8,
+          "10": 0.34,
+          "3": 0.485714,
+          "5": 0.417143
+        },
+        "recall": {
+          "1": 0.224598,
+          "10": 0.297335,
+          "3": 0.247563,
+          "5": 0.256472
+        }
+      },
+      "cases_scored": 35
+    },
+    "no_exact_identifier": {
+      "aggregate": {
+        "mrr": 0.819798,
+        "ndcg": {
+          "1": 0.77551,
+          "10": 0.675594,
+          "3": 0.701083,
+          "5": 0.692362
+        },
+        "precision": {
+          "1": 0.8,
+          "10": 0.388571,
+          "3": 0.485714,
+          "5": 0.428571
+        },
+        "recall": {
+          "1": 0.224598,
+          "10": 0.299358,
+          "3": 0.247563,
+          "5": 0.25671
+        }
+      },
+      "cases_scored": 35
+    },
+    "no_graph": {
+      "aggregate": {
+        "mrr": 0.819798,
+        "ndcg": {
+          "1": 0.77551,
+          "10": 0.648568,
+          "3": 0.701083,
+          "5": 0.687199
+        },
+        "precision": {
+          "1": 0.8,
+          "10": 0.34,
+          "3": 0.485714,
+          "5": 0.417143
+        },
+        "recall": {
+          "1": 0.224598,
+          "10": 0.297335,
+          "3": 0.247563,
+          "5": 0.256472
+        }
+      },
+      "cases_scored": 35
+    },
+    "no_source_weight": {
+      "aggregate": {
+        "mrr": 0.849075,
+        "ndcg": {
+          "1": 0.755102,
+          "10": 0.723341,
+          "3": 0.777155,
+          "5": 0.752558
+        },
+        "precision": {
+          "1": 0.771429,
+          "10": 0.411429,
+          "3": 0.590476,
+          "5": 0.508571
+        },
+        "recall": {
+          "1": 0.224478,
+          "10": 0.368002,
+          "3": 0.292821,
+          "5": 0.327716
+        }
+      },
+      "cases_scored": 35
+    }
+  },
+  "benchmark_version": "odosian-retrieval-1.0",
+  "cases": 36,
+  "corpus_digests": {
+    "ecs": "946afcf66eba0279611723e07a119fdf6ddbeaa250b9cb3857caaa792e9e3cfc",
+    "elastic": "b5dbfe5fa93958cfbb0e4e4699a653b95e7474a0dda9ae4697c09e387878abba",
+    "lolbas": "6feea579ce4db6ccd610a74d8bb069a53f2fdcecdcc51bb78f64bc4687421f4f",
+    "mitre": "7e87c0d1241408274ed483613f6d836f93f0b5025031ffc7ae9aaf6afca128dd",
+    "sigma": "4b22114d0286449830467802c3315fe84b4d5904d57cad1d6f52d17d362f6303"
+  },
+  "generated_at": "2026-08-10T11:01:48.355100+00:00",
+  "judgments": 2605,
+  "k_values": [
+    1,
+    3,
+    5,
+    10
+  ],
+  "latency": {
+    "index_build_seconds": 6.465,
+    "mean_ms": 17.589,
+    "median_ms": 10.554,
+    "p95_ms": 45.871,
+    "queries": 108,
+    "total_seconds": 13.579
+  },
+  "modes": {
+    "graph": {
+      "aggregate": {
+        "mrr": 0.6,
+        "ndcg": {
+          "1": 0.571429,
+          "10": 0.571364,
+          "3": 0.595712,
+          "5": 0.584662
+        },
+        "precision": {
+          "1": 0.571429,
+          "10": 0.385714,
+          "3": 0.47619,
+          "5": 0.428571
+        },
+        "recall": {
+          "1": 0.204629,
+          "10": 0.244467,
+          "3": 0.214822,
+          "5": 0.223592
+        }
+      },
+      "cases_scored": 35,
+      "cases_skipped": 1,
+      "per_case": [
+        {
+          "ambiguous_seeds": [],
+          "case_id": "attack-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "recall": {
+              "1": 0.004167,
+              "10": 0.041667,
+              "3": 0.0125,
+              "5": 0.020833
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1059.001",
+            "sigma:core:02030f2f-6199-49ec-b258-ea71b07e03dc",
+            "sigma:core:092bc4b9-3d1d-43b4-a6b4-8c8acd83522f",
+            "sigma:core:36210e0d-5b19-485d-a087-c096088885f0",
+            "sigma:core:41025fd7-0466-4650-a813-574aaacbe7f4"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "attack-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.662755,
+              "3": 1.0,
+              "5": 0.909652
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.4,
+              "3": 1.0,
+              "5": 0.8
+            },
+            "recall": {
+              "1": 0.014706,
+              "10": 0.058824,
+              "3": 0.044118,
+              "5": 0.058824
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1055",
+            "sigma:core:02d1d718-dd13-41af-989d-ea85c7fab93f",
+            "sigma:core:66d31e5f-52d6-40a4-9615-002d3789a119",
+            "sigma:core:85adeb13-4fc9-4e68-8a4a-c7cb2c336eb7",
+            "mitre:enterprise:T1055.001"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "attack-003",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.943281,
+              "3": 0.903779,
+              "5": 0.922151
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "recall": {
+              "1": 0.012195,
+              "10": 0.121951,
+              "3": 0.036585,
+              "5": 0.060976
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1218.011",
+            "sigma:core:e593cf51-88db-4ee1-b920-37e89012a3c9",
+            "mitre:enterprise:T1218",
+            "sigma:core:0ea52357-cd59-4340-9981-c46c7e900428",
+            "sigma:core:15bd98ea-55f4-4d37-b09a-e7caa0fa2221"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "attack-004",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.965852,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "recall": {
+              "1": 0.02381,
+              "10": 0.238095,
+              "3": 0.071429,
+              "5": 0.119048
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1547.001",
+            "sigma:core:20f0ee37-5942-4e45-b7d5-c5b5db9df5cd",
+            "sigma:core:9df5f547-c86a-433e-b533-f2794357e242",
+            "sigma:core:b29aed60-ebd1-442b-9cb5-16a1d0324adb",
+            "sigma:core:baecf8fb-edbf-429f-9ade-31fc3f22b970"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "attack-005",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.589472,
+              "3": 1.0,
+              "5": 0.809068
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.3,
+              "3": 1.0,
+              "5": 0.6
+            },
+            "recall": {
+              "1": 0.008772,
+              "10": 0.026316,
+              "3": 0.026316,
+              "5": 0.026316
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1003",
+            "sigma:core:24e3e58a-646b-4b50-adef-02ef935b9fc8",
+            "sigma:core:2617e7ed-adb7-40ba-b0f3-8f9945fe6c09",
+            "mitre:enterprise:T1003.001",
+            "mitre:enterprise:T1003.002"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "name-001",
+          "retrieved_chunks": 0,
+          "scores": {
+            "mrr": 0.0,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "name-002",
+          "retrieved_chunks": 0,
+          "scores": {
+            "mrr": 0.0,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "name-003",
+          "retrieved_chunks": 0,
+          "scores": {
+            "mrr": 0.0,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "name-004",
+          "retrieved_chunks": 0,
+          "scores": {
+            "mrr": 0.0,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "detect-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "recall": {
+              "1": 0.004167,
+              "10": 0.041667,
+              "3": 0.0125,
+              "5": 0.020833
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1059.001",
+            "sigma:core:02030f2f-6199-49ec-b258-ea71b07e03dc",
+            "sigma:core:092bc4b9-3d1d-43b4-a6b4-8c8acd83522f",
+            "sigma:core:36210e0d-5b19-485d-a087-c096088885f0",
+            "sigma:core:41025fd7-0466-4650-a813-574aaacbe7f4"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "detect-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.589472,
+              "3": 1.0,
+              "5": 0.809068
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.3,
+              "3": 1.0,
+              "5": 0.6
+            },
+            "recall": {
+              "1": 0.008772,
+              "10": 0.026316,
+              "3": 0.026316,
+              "5": 0.026316
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1003",
+            "sigma:core:24e3e58a-646b-4b50-adef-02ef935b9fc8",
+            "sigma:core:2617e7ed-adb7-40ba-b0f3-8f9945fe6c09",
+            "mitre:enterprise:T1003.001",
+            "mitre:enterprise:T1003.002"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "detect-003",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.965852,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "recall": {
+              "1": 0.02381,
+              "10": 0.238095,
+              "3": 0.071429,
+              "5": 0.119048
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1547.001",
+            "sigma:core:20f0ee37-5942-4e45-b7d5-c5b5db9df5cd",
+            "sigma:core:9df5f547-c86a-433e-b533-f2794357e242",
+            "sigma:core:b29aed60-ebd1-442b-9cb5-16a1d0324adb",
+            "sigma:core:baecf8fb-edbf-429f-9ade-31fc3f22b970"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "detect-004",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.943281,
+              "3": 0.903779,
+              "5": 0.922151
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "recall": {
+              "1": 0.012195,
+              "10": 0.121951,
+              "3": 0.036585,
+              "5": 0.060976
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1218.011",
+            "sigma:core:e593cf51-88db-4ee1-b920-37e89012a3c9",
+            "mitre:enterprise:T1218",
+            "sigma:core:0ea52357-cd59-4340-9981-c46c7e900428",
+            "sigma:core:15bd98ea-55f4-4d37-b09a-e7caa0fa2221"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "cmd-001",
+          "retrieved_chunks": 0,
+          "scores": {
+            "mrr": 0.0,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "cmd-002",
+          "retrieved_chunks": 0,
+          "scores": {
+            "mrr": 0.0,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "cmd-003",
+          "retrieved_chunks": 0,
+          "scores": {
+            "mrr": 0.0,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "net-001",
+          "retrieved_chunks": 1,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "ecs:destination.ip"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "net-002",
+          "retrieved_chunks": 1,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "ecs:network.protocol"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "net-003",
+          "retrieved_chunks": 1,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "ecs:destination.port"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "ecs-001",
+          "retrieved_chunks": 1,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "ecs:process.command_line"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "ecs-002",
+          "retrieved_chunks": 1,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "ecs:process.name"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "ecs-003",
+          "retrieved_chunks": 1,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "ecs:event.code"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "ecs-004",
+          "retrieved_chunks": 1,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "ecs:user.name"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "sigma-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.951145,
+              "3": 1.0,
+              "5": 0.932945
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "recall": {
+              "1": 0.017857,
+              "10": 0.178571,
+              "3": 0.053571,
+              "5": 0.089286
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1053.005",
+            "sigma:core:4720b7df-40c3-48fd-bbdf-fd4b3c464f0d",
+            "sigma:core:81325ce1-be01-4250-944f-b4789644556f",
+            "mitre:enterprise:T1053",
+            "sigma:core:1c0e41cd-21bb-4433-9acc-4a2cd6367b9b"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "sigma-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "recall": {
+              "1": 0.002857,
+              "10": 0.028571,
+              "3": 0.008571,
+              "5": 0.014286
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1218",
+            "elastic-rules:00140285-b827-4aee-aa09-8113f58a08f3",
+            "elastic-rules:06d555e4-c8ce-4d90-90e1-ec7f66df5a6a",
+            "elastic-rules:1719ee47-89b8-4407-9d55-6dff2629dd4c",
+            "elastic-rules:181f6b23-3799-445e-9589-0018328a9e46"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "elastic-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "recall": {
+              "1": 0.007874,
+              "10": 0.07874,
+              "3": 0.023622,
+              "5": 0.03937
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1036",
+            "elastic-rules:09443c92-46b3-45a4-8f25-383b028b258d",
+            "elastic-rules:1160dcdb-0a0a-4a79-91d8-9b84616edebd",
+            "elastic-rules:13e908b9-7bf0-4235-abc9-b5deb500d0ad",
+            "elastic-rules:1fe3b299-fbb5-4657-a937-1d746f2c711a"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "elastic-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.943281,
+              "3": 0.903779,
+              "5": 0.922151
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "recall": {
+              "1": 0.020833,
+              "10": 0.208333,
+              "3": 0.0625,
+              "5": 0.104167
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1204.002",
+            "sigma:core:438025f9-5856-4663-83f7-52f878a70a50",
+            "mitre:enterprise:T1204",
+            "sigma:core:00d0b5ab-1f55-4120-8e83-487c0a7baf19",
+            "sigma:core:1193d960-2369-499f-a158-7b50a31df682"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "lolbas-001",
+          "retrieved_chunks": 0,
+          "scores": {
+            "mrr": 0.0,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "lolbas-002",
+          "retrieved_chunks": 0,
+          "scores": {
+            "mrr": 0.0,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "lolbas-003",
+          "retrieved_chunks": 0,
+          "scores": {
+            "mrr": 0.0,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "multi-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.5,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.746108,
+              "3": 0.56929,
+              "5": 0.651526
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.9,
+              "3": 0.666667,
+              "5": 0.8
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.0375,
+              "3": 0.008333,
+              "5": 0.016667
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "ecs:process.command_line",
+            "mitre:enterprise:T1059.001",
+            "sigma:core:02030f2f-6199-49ec-b258-ea71b07e03dc",
+            "sigma:core:092bc4b9-3d1d-43b4-a6b4-8c8acd83522f",
+            "sigma:core:36210e0d-5b19-485d-a087-c096088885f0"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "multi-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.5,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.697253,
+              "3": 0.56929,
+              "5": 0.58447
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.9,
+              "3": 0.666667,
+              "5": 0.8
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.109756,
+              "3": 0.02439,
+              "5": 0.04878
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "ecs:process.command_line",
+            "mitre:enterprise:T1218.011",
+            "sigma:core:e593cf51-88db-4ee1-b920-37e89012a3c9",
+            "mitre:enterprise:T1218",
+            "sigma:core:0ea52357-cd59-4340-9981-c46c7e900428"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "unresolved-001",
+          "retrieved_chunks": 0,
+          "scores": {
+            "mrr": 0.0,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [],
+          "unresolved_seeds": [
+            "T1562"
+          ]
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "unresolved-002",
+          "retrieved_chunks": 0,
+          "scores": {
+            "mrr": 0.0,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [],
+          "unresolved_seeds": [
+            "T1562.001"
+          ]
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "tactic-001",
+          "retrieved_chunks": 0,
+          "scores": {
+            "mrr": 0.0,
+            "ndcg": {},
+            "precision": {},
+            "recall": {}
+          },
+          "skip_reason": "corpus grounds no relevant record for this case",
+          "skipped": true,
+          "top_records": [],
+          "unresolved_seeds": [
+            "TA0011"
+          ]
+        },
+        {
+          "ambiguous_seeds": [
+            "M1013"
+          ],
+          "case_id": "ambiguous-001",
+          "retrieved_chunks": 0,
+          "scores": {
+            "mrr": 0.0,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [],
+          "unresolved_seeds": []
+        }
+      ]
+    },
+    "hybrid": {
+      "aggregate": {
+        "mrr": 0.819798,
+        "ndcg": {
+          "1": 0.77551,
+          "10": 0.648568,
+          "3": 0.701083,
+          "5": 0.687199
+        },
+        "precision": {
+          "1": 0.8,
+          "10": 0.34,
+          "3": 0.485714,
+          "5": 0.417143
+        },
+        "recall": {
+          "1": 0.224598,
+          "10": 0.297335,
+          "3": 0.247563,
+          "5": 0.256472
+        }
+      },
+      "cases_scored": 35,
+      "cases_skipped": 1,
+      "per_case": [
+        {
+          "ambiguous_seeds": [],
+          "case_id": "attack-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.662755,
+              "3": 1.0,
+              "5": 0.909652
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.4,
+              "3": 1.0,
+              "5": 0.8
+            },
+            "recall": {
+              "1": 0.004167,
+              "10": 0.016667,
+              "3": 0.0125,
+              "5": 0.016667
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1059.001",
+            "gtfobins-lolbas:lolbas:Powershell.exe:cmd3",
+            "gtfobins-lolbas:lolbas:Powershell.exe:cmd2",
+            "gtfobins-lolbas:lolbas:Powershell.exe:cmd1",
+            "elastic-rules:852c1f19-68e8-43a6-9dce-340771fe1be3"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "attack-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.397035,
+              "3": 0.673544,
+              "5": 0.544943
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 0.014706,
+              "10": 0.014706,
+              "3": 0.014706,
+              "5": 0.014706
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1055",
+            "mitre:enterprise:T1055.012",
+            "mitre:enterprise:T1055.002",
+            "mitre:enterprise:T1055.003",
+            "mitre:enterprise:T1055.009"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "attack-003",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "recall": {
+              "1": 0.012195,
+              "10": 0.121951,
+              "3": 0.036585,
+              "5": 0.060976
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1218.011",
+            "gtfobins-lolbas:lolbas:Pcwutl.dll:cmd1",
+            "gtfobins-lolbas:lolbas:Rundll32.exe:cmd1",
+            "gtfobins-lolbas:lolbas:Zipfldr.dll:cmd1",
+            "gtfobins-lolbas:lolbas:Mshtml.dll:cmd1"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "attack-004",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.397035,
+              "3": 0.673544,
+              "5": 0.544943
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 0.02381,
+              "10": 0.02381,
+              "3": 0.02381,
+              "5": 0.02381
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1547.001",
+            "elastic-rules:c8b150f0-0164-475b-a75e-74b47800a9ff",
+            "elastic-rules:70d12c9c-0dbd-4a1a-bc44-1467502c9cf6",
+            "elastic-rules:1719ee47-89b8-4407-9d55-6dff2629dd4c",
+            "elastic-rules:97fc44d3-8dae-4019-ae83-298c3015600f"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "attack-005",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.446222,
+              "3": 0.673544,
+              "5": 0.544943
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.2,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 0.008772,
+              "10": 0.017544,
+              "3": 0.008772,
+              "5": 0.008772
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1003",
+            "mitre:enterprise:T1003.001",
+            "mitre:enterprise:T1003.005",
+            "mitre:enterprise:T1003.006",
+            "mitre:enterprise:T1003.008"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "name-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 0.142857,
+              "10": 0.519319,
+              "3": 0.184481,
+              "5": 0.504527
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.6,
+              "3": 0.666667,
+              "5": 0.6
+            },
+            "recall": {
+              "1": 0.004184,
+              "10": 0.025105,
+              "3": 0.008368,
+              "5": 0.012552
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "sigma:core:092bc4b9-3d1d-43b4-a6b4-8c8acd83522f",
+            "mitre:enterprise:T1546.013",
+            "sigma:core:58cb02d5-78ce-4692-b3e1-dce850aae41a",
+            "mitre:enterprise:T1059.001",
+            "elastic-rules:e903ce9a-5ce6-4246-bb14-75ed3ec2edf5"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "name-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.333333,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.477912,
+              "3": 0.29371,
+              "5": 0.5116
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.3,
+              "3": 0.333333,
+              "5": 0.4
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.043478,
+              "3": 0.014493,
+              "5": 0.028986
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1055.011",
+            "mitre:enterprise:T1055.002",
+            "mitre:mobile:T1631",
+            "mitre:enterprise:T1055",
+            "mitre:enterprise:T1055.001"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "name-003",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.863833,
+              "3": 1.0,
+              "5": 0.951871
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.6,
+              "3": 1.0,
+              "5": 0.8
+            },
+            "recall": {
+              "1": 0.008772,
+              "10": 0.052632,
+              "3": 0.026316,
+              "5": 0.035088
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1003",
+            "elastic-rules:ac96ceb8-4399-4191-af1d-4feeac1f1f46",
+            "elastic-rules:00140285-b827-4aee-aa09-8113f58a08f3",
+            "mitre:enterprise:T1003.001",
+            "elastic-rules:b8386923-b02c-4b94-986a-d223d9b01f88"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "name-004",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.663912,
+              "3": 0.86091,
+              "5": 0.782258
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 0.020408,
+              "10": 0.020408,
+              "3": 0.020408,
+              "5": 0.020408
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1059.003",
+            "mitre:enterprise:T1059",
+            "elastic-rules:2917d495-59bd-4250-b395-c29409b76086",
+            "sigma:core:96f697b0-b499-4e5d-9908-a67bec11cdb6",
+            "elastic-rules:d9ffc3d6-9de9-4b29-9395-5757d0695ecf"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "detect-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.662755,
+              "3": 1.0,
+              "5": 0.909652
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.4,
+              "3": 1.0,
+              "5": 0.8
+            },
+            "recall": {
+              "1": 0.004167,
+              "10": 0.016667,
+              "3": 0.0125,
+              "5": 0.016667
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1059.001",
+            "gtfobins-lolbas:lolbas:Powershell.exe:cmd2",
+            "gtfobins-lolbas:lolbas:Powershell.exe:cmd3",
+            "gtfobins-lolbas:lolbas:Powershell.exe:cmd1",
+            "elastic-rules:74d31cb7-4a2c-44fe-9d1d-f375b9f3cb61"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "detect-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.838963,
+              "3": 0.817875,
+              "5": 0.852648
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.8,
+              "3": 0.666667,
+              "5": 0.8
+            },
+            "recall": {
+              "1": 0.008772,
+              "10": 0.070175,
+              "3": 0.017544,
+              "5": 0.035088
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1003",
+            "mitre:enterprise:T1003.001",
+            "elastic-rules:128468bf-cab1-4637-99ea-fdf3780a4609",
+            "elastic-rules:ff4599cb-409f-4910-a239-52e4e6f532ff",
+            "elastic-rules:e707a7be-cc52-41ac-8ab3-d34b38c20005"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "detect-003",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.397035,
+              "3": 0.673544,
+              "5": 0.544943
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 0.02381,
+              "10": 0.02381,
+              "3": 0.02381,
+              "5": 0.02381
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1547.001",
+            "elastic-rules:97fc44d3-8dae-4019-ae83-298c3015600f",
+            "elastic-rules:70d12c9c-0dbd-4a1a-bc44-1467502c9cf6",
+            "elastic-rules:c8b150f0-0164-475b-a75e-74b47800a9ff",
+            "elastic-rules:a9b05c3b-b304-4bf9-970d-acdfaef2944c"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "detect-004",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.948777,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.9,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "recall": {
+              "1": 0.012195,
+              "10": 0.109756,
+              "3": 0.036585,
+              "5": 0.060976
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1218.011",
+            "gtfobins-lolbas:lolbas:Rundll32.exe:cmd1",
+            "gtfobins-lolbas:lolbas:Rundll32.exe:cmd2",
+            "gtfobins-lolbas:lolbas:Rundll32.exe:cmd5",
+            "gtfobins-lolbas:lolbas:Rundll32.exe:cmd3"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "cmd-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.023256,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1218.011",
+            "sigma:deprecated:d4d2574f-ac17-4d9e-b986-aeeae0dc8fe2",
+            "sigma:core:1775e15e-b61b-4d14-a1a3-80981298085a",
+            "sigma:core:f40017b3-cb2e-4335-ab5d-3babf679c1de",
+            "sigma:core:ae9c6a7c-9521-42a6-915e-5aaa8689d529"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "cmd-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.613443,
+              "3": 0.703918,
+              "5": 0.654809
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.4,
+              "3": 0.666667,
+              "5": 0.6
+            },
+            "recall": {
+              "1": 0.142857,
+              "10": 0.571429,
+              "3": 0.285714,
+              "5": 0.428571
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "gtfobins-lolbas:lolbas:Certutil.exe:cmd4",
+            "sigma:core:19b08b1c-861d-4e75-a1ef-ea0c1baf202b",
+            "gtfobins-lolbas:lolbas:Certutil.exe:cmd1",
+            "gtfobins-lolbas:lolbas:Certutil.exe:cmd2",
+            "sigma:core:214641c2-c579-4ecb-8427-0cf19df6842e"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "cmd-003",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.111111,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.082746,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.1,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.142857,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "sigma:core:526be59f-a573-4eea-b5f7-f0973207634d",
+            "sigma:core:3c89a1e8-0fba-449e-8f1b-8409d6267ec8",
+            "sigma:core:221b251a-357a-49a9-920a-271802777cc0",
+            "sigma:deprecated:c0e1c3d5-4381-4f18-8145-2583f06a1fe5",
+            "sigma:deprecated:9d1c72f5-43f0-4da5-9320-648cf2099dd0"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "net-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "ecs:destination.ip",
+            "elastic-rules:0171f283-ade7-4f87-9521-ac346c68cc9b",
+            "elastic-rules:1dd99dbf-b98d-4956-876b-f13bc0ce017f",
+            "elastic-rules:08933236-b27a-49f6-b04a-a616983f04b9",
+            "elastic-rules:2c40dfe2-c13e-48a8-8eff-fb9bfb2a7854"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "net-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "ecs:network.protocol",
+            "elastic-rules:cf53f532-9cc9-445a-9ae7-fced307ec53c",
+            "elastic-rules:4a4e23cf-78a2-449c-bac3-701924c269d3",
+            "elastic-rules:2e580225-2a58-48ef-938b-572933be06fe",
+            "elastic-rules:31295df3-277b-4c56-a1fb-84e31b4222a9"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "net-003",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "ecs:destination.port",
+            "elastic-rules:0171f283-ade7-4f87-9521-ac346c68cc9b",
+            "elastic-rules:6b341d03-1d63-41ac-841a-2009c86959ca",
+            "elastic-rules:77122db4-5876-4127-b91b-6c179eb21f88",
+            "elastic-rules:62b68eb2-1e47-4da7-85b6-8f478db5b272"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "ecs-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "ecs:process.command_line",
+            "elastic-rules:b8e4c2a1-7f3d-4e9b-8c5a-1d0e6f2a4b8c",
+            "elastic-rules:b42e4b88-fc4a-417b-a45e-4d4a3db9fd41",
+            "elastic-rules:5dc3519c-1f56-42fc-9a70-7e6b705c2781",
+            "elastic-rules:6148b9f5-5b12-4704-9ef7-f4b4c5dd9bb5"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "ecs-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "ecs:process.name",
+            "elastic-rules:1fe3b299-fbb5-4657-a937-1d746f2c711a",
+            "elastic-rules:b2c3d4e5-f6a7-8901-bcde-f123456789ab",
+            "elastic-rules:35df0dd8-092d-4a83-88c1-5151a804f31b",
+            "elastic-rules:640f79d1-571d-4f96-a9af-1194fc8cf763"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "ecs-003",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "ecs:event.code",
+            "elastic-rules:28371aa1-14ed-46cf-ab5b-2fc7d1942278",
+            "elastic-rules:ab25369e-ea5e-46f1-9cd5-478a0a4a131a",
+            "elastic-rules:da87eee1-129c-4661-a7aa-57d0b9645fad",
+            "elastic-rules:c5f81243-56e0-47f9-b5bb-55a5ed89ba57"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "ecs-004",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "ecs:user.name",
+            "elastic-rules:ff4599cb-409f-4910-a239-52e4e6f532ff",
+            "elastic-rules:504e398f-5ad6-42c7-acd2-b2f4ddcdb0cf",
+            "elastic-rules:c3da1952-bae4-4672-aa57-2be7e6805381",
+            "elastic-rules:48b6edfc-079d-4907-b43c-baffa243270d"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "sigma-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.397035,
+              "3": 0.673544,
+              "5": 0.544943
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 0.017857,
+              "10": 0.017857,
+              "3": 0.017857,
+              "5": 0.017857
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1053.005",
+            "elastic-rules:5d1d6907-0747-4d5d-9b24-e4a18853dc0a",
+            "elastic-rules:81ff45f8-f8c2-4e28-992e-5a0e8d98e0fe",
+            "elastic-rules:1719ee47-89b8-4407-9d55-6dff2629dd4c",
+            "elastic-rules:68921d85-d0dc-48b3-865f-43291ca2c4f2"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "sigma-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "recall": {
+              "1": 0.002857,
+              "10": 0.028571,
+              "3": 0.008571,
+              "5": 0.014286
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1218",
+            "elastic-rules:181f6b23-3799-445e-9589-0018328a9e46",
+            "elastic-rules:1fe3b299-fbb5-4657-a937-1d746f2c711a",
+            "elastic-rules:a624863f-a70d-417f-a7d2-7a404638d47f",
+            "elastic-rules:32f4675e-6c49-4ace-80f9-97c9259dca2e"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "elastic-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "recall": {
+              "1": 0.007874,
+              "10": 0.07874,
+              "3": 0.023622,
+              "5": 0.03937
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1036",
+            "elastic-rules:fb01d790-9f74-4e76-97dd-b4b0f7bf6435",
+            "elastic-rules:4494c14f-5ff8-4ed2-8e99-bf816a1642fc",
+            "elastic-rules:b41a13c6-ba45-4bab-a534-df53d0cfed6a",
+            "elastic-rules:fd9484f2-1c56-44ae-8b28-dc1354e3a0e8"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "elastic-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.397035,
+              "3": 0.673544,
+              "5": 0.544943
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 0.020833,
+              "10": 0.020833,
+              "3": 0.020833,
+              "5": 0.020833
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1204.002",
+            "elastic-rules:66da12b1-ac83-40eb-814c-07ed1d82b7b9",
+            "elastic-rules:ae8a142c-6a1d-4918-bea7-0b617e99ecfa",
+            "elastic-rules:c5dc3223-13a2-44a2-946c-e9dc0aa0449c",
+            "elastic-rules:f87e6122-ea34-11ee-a417-f661ea17fbce"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "lolbas-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.0625,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1218.010",
+            "sigma:deprecated:8e2b24c9-4add-46a0-b4bb-0057b4e6187d",
+            "sigma:core:88a87a10-384b-4ad7-8871-2f9bf9259ce5",
+            "sigma:core:36e037c4-c228-4866-b6a3-48eb292b9955",
+            "sigma:core:c7e91a02-d771-4a6d-a700-42587e0b1095"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "lolbas-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.142857,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.420183,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.4,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.8,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "elastic-rules:9d110cb3-5f4b-4c9a-b9f5-53f0a1707ae2",
+            "sigma:core:33be4333-2c6b-44f4-ae28-102cdbde0a31",
+            "sigma:core:148431ce-4b70-403d-8525-fcc2993f29ea",
+            "mitre:enterprise:T1127.001",
+            "elastic-rules:fec7ccb7-6ed9-4f98-93ab-d6b366b063a0"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "lolbas-003",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.008621,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:G0098",
+            "mitre:enterprise:G0076",
+            "mitre:enterprise:G1051",
+            "mitre:enterprise:C0051",
+            "mitre:enterprise:C0034"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "multi-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.621223,
+              "3": 0.817875,
+              "5": 0.852648
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.4,
+              "3": 0.666667,
+              "5": 0.8
+            },
+            "recall": {
+              "1": 0.004167,
+              "10": 0.016667,
+              "3": 0.008333,
+              "5": 0.016667
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1059.001",
+            "ecs:process.command_line",
+            "gtfobins-lolbas:lolbas:Powershell.exe:cmd2",
+            "gtfobins-lolbas:lolbas:Powershell.exe:cmd3",
+            "gtfobins-lolbas:lolbas:Powershell.exe:cmd1"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "multi-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.892642,
+              "3": 0.817875,
+              "5": 0.852648
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.9,
+              "3": 0.666667,
+              "5": 0.8
+            },
+            "recall": {
+              "1": 0.012195,
+              "10": 0.109756,
+              "3": 0.02439,
+              "5": 0.04878
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1218.011",
+            "ecs:process.command_line",
+            "gtfobins-lolbas:lolbas:Rundll32.exe:cmd1",
+            "gtfobins-lolbas:lolbas:Rundll32.exe:cmd2",
+            "gtfobins-lolbas:lolbas:Rundll32.exe:cmd5"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "unresolved-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "recall": {
+              "1": 0.006329,
+              "10": 0.063291,
+              "3": 0.018987,
+              "5": 0.031646
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "elastic-rules:92d3a04e-6487-4b62-892d-70e640a590dc",
+            "elastic-rules:3aff6ab1-18bd-427e-9d4c-c5732110c261",
+            "elastic-rules:5370d4cd-2bb3-4d71-abf5-1e1d0ff5a2de",
+            "elastic-rules:fe794edd-487f-4a90-b285-3ee54f2af2d3",
+            "elastic-rules:323cb487-279d-4218-bcbd-a568efe930c6"
+          ],
+          "unresolved_seeds": [
+            "T1562"
+          ]
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "unresolved-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.011236,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "elastic-rules:92d3a04e-6487-4b62-892d-70e640a590dc",
+            "elastic-rules:fe794edd-487f-4a90-b285-3ee54f2af2d3",
+            "elastic-rules:c8cccb06-faf2-4cd5-886e-2c9636cfcb87",
+            "elastic-rules:eb9eb8ba-a983-41d9-9c93-a1c05112ca5e",
+            "elastic-rules:fa488440-04cc-41d7-9279-539387bf2a17"
+          ],
+          "unresolved_seeds": [
+            "T1562.001"
+          ]
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "tactic-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.0,
+            "ndcg": {},
+            "precision": {},
+            "recall": {}
+          },
+          "skip_reason": "corpus grounds no relevant record for this case",
+          "skipped": true,
+          "top_records": [
+            "mitre:enterprise:T1104",
+            "mitre:enterprise:T1008",
+            "mitre:enterprise:T1001.003",
+            "mitre:enterprise:T1568",
+            "mitre:enterprise:T1001.002"
+          ],
+          "unresolved_seeds": [
+            "TA0011"
+          ]
+        },
+        {
+          "ambiguous_seeds": [
+            "M1013"
+          ],
+          "case_id": "ambiguous-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.2,
+              "3": 0.666667,
+              "5": 0.4
+            },
+            "recall": {
+              "1": 0.5,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:mobile:M1013",
+            "mitre:enterprise:M1013",
+            "mitre:ics:M0913",
+            "mitre:mobile:M1011",
+            "elastic-rules:9d110cb3-5f4b-4c9a-b9f5-53f0a1707ae1"
+          ],
+          "unresolved_seeds": []
+        }
+      ]
+    },
+    "text": {
+      "aggregate": {
+        "mrr": 0.634218,
+        "ndcg": {
+          "1": 0.502041,
+          "10": 0.465444,
+          "3": 0.48246,
+          "5": 0.48346
+        },
+        "precision": {
+          "1": 0.542857,
+          "10": 0.222857,
+          "3": 0.32381,
+          "5": 0.262857
+        },
+        "recall": {
+          "1": 0.16519,
+          "10": 0.258517,
+          "3": 0.186653,
+          "5": 0.221999
+        }
+      },
+      "cases_scored": 35,
+      "cases_skipped": 1,
+      "per_case": [
+        {
+          "ambiguous_seeds": [],
+          "case_id": "attack-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.397035,
+              "3": 0.673544,
+              "5": 0.544943
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 0.004167,
+              "10": 0.004167,
+              "3": 0.004167,
+              "5": 0.004167
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1059.001",
+            "elastic-rules:852c1f19-68e8-43a6-9dce-340771fe1be3",
+            "elastic-rules:c8cccb06-faf2-4cd5-886e-2c9636cfcb87",
+            "elastic-rules:9d110cb3-5f4b-4c9a-b9f5-53f0a1707ae2",
+            "elastic-rules:2917d495-59bd-4250-b395-c29409b76086"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "attack-002",
+          "retrieved_chunks": 99,
+          "scores": {
+            "mrr": 0.076923,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1055.012",
+            "mitre:enterprise:T1055.002",
+            "mitre:enterprise:T1055.003",
+            "mitre:enterprise:T1055.009",
+            "mitre:enterprise:T1055.013"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "attack-003",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.497445,
+              "3": 0.673544,
+              "5": 0.544943
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.3,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 0.012195,
+              "10": 0.036585,
+              "3": 0.012195,
+              "5": 0.012195
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1218.011",
+            "elastic-rules:6756ee27-9152-479b-9b73-54b5bbda301c",
+            "elastic-rules:00140285-b827-4aee-aa09-8113f58a08f3",
+            "elastic-rules:181f6b23-3799-445e-9589-0018328a9e46",
+            "elastic-rules:e7125cea-9fe1-42a5-9a05-b0792cf86f5a"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "attack-004",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.397035,
+              "3": 0.673544,
+              "5": 0.544943
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 0.02381,
+              "10": 0.02381,
+              "3": 0.02381,
+              "5": 0.02381
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1547.001",
+            "elastic-rules:c8b150f0-0164-475b-a75e-74b47800a9ff",
+            "elastic-rules:70d12c9c-0dbd-4a1a-bc44-1467502c9cf6",
+            "elastic-rules:1719ee47-89b8-4407-9d55-6dff2629dd4c",
+            "elastic-rules:97fc44d3-8dae-4019-ae83-298c3015600f"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "attack-005",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.111111,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.100409,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.2,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.017544,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1003.001",
+            "mitre:enterprise:T1003.005",
+            "mitre:enterprise:T1003.006",
+            "mitre:enterprise:T1003.008",
+            "mitre:enterprise:T1003.004"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "name-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 0.142857,
+              "10": 0.519319,
+              "3": 0.184481,
+              "5": 0.504527
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.6,
+              "3": 0.666667,
+              "5": 0.6
+            },
+            "recall": {
+              "1": 0.004184,
+              "10": 0.025105,
+              "3": 0.008368,
+              "5": 0.012552
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "sigma:core:092bc4b9-3d1d-43b4-a6b4-8c8acd83522f",
+            "mitre:enterprise:T1546.013",
+            "sigma:core:58cb02d5-78ce-4692-b3e1-dce850aae41a",
+            "mitre:enterprise:T1059.001",
+            "elastic-rules:e903ce9a-5ce6-4246-bb14-75ed3ec2edf5"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "name-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.333333,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.477912,
+              "3": 0.29371,
+              "5": 0.5116
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.3,
+              "3": 0.333333,
+              "5": 0.4
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.043478,
+              "3": 0.014493,
+              "5": 0.028986
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1055.011",
+            "mitre:enterprise:T1055.002",
+            "mitre:mobile:T1631",
+            "mitre:enterprise:T1055",
+            "mitre:enterprise:T1055.001"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "name-003",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.863833,
+              "3": 1.0,
+              "5": 0.951871
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.6,
+              "3": 1.0,
+              "5": 0.8
+            },
+            "recall": {
+              "1": 0.008772,
+              "10": 0.052632,
+              "3": 0.026316,
+              "5": 0.035088
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1003",
+            "elastic-rules:ac96ceb8-4399-4191-af1d-4feeac1f1f46",
+            "elastic-rules:00140285-b827-4aee-aa09-8113f58a08f3",
+            "mitre:enterprise:T1003.001",
+            "elastic-rules:b8386923-b02c-4b94-986a-d223d9b01f88"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "name-004",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.663912,
+              "3": 0.86091,
+              "5": 0.782258
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 0.020408,
+              "10": 0.020408,
+              "3": 0.020408,
+              "5": 0.020408
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1059.003",
+            "mitre:enterprise:T1059",
+            "elastic-rules:2917d495-59bd-4250-b395-c29409b76086",
+            "sigma:core:96f697b0-b499-4e5d-9908-a67bec11cdb6",
+            "elastic-rules:d9ffc3d6-9de9-4b29-9395-5757d0695ecf"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "detect-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.333333,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.198518,
+              "3": 0.336772,
+              "5": 0.272472
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.004167,
+              "3": 0.004167,
+              "5": 0.004167
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "elastic-rules:74d31cb7-4a2c-44fe-9d1d-f375b9f3cb61",
+            "elastic-rules:c8cccb06-faf2-4cd5-886e-2c9636cfcb87",
+            "mitre:enterprise:T1059.001",
+            "elastic-rules:f9abcddc-a05d-4345-a81d-000b79aa5525",
+            "elastic-rules:852c1f19-68e8-43a6-9dce-340771fe1be3"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "detect-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.5,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.495023,
+              "3": 0.326456,
+              "5": 0.455057
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.7,
+              "3": 0.666667,
+              "5": 0.8
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.061404,
+              "3": 0.017544,
+              "5": 0.035088
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1003.001",
+            "elastic-rules:128468bf-cab1-4637-99ea-fdf3780a4609",
+            "elastic-rules:ff4599cb-409f-4910-a239-52e4e6f532ff",
+            "elastic-rules:e707a7be-cc52-41ac-8ab3-d34b38c20005",
+            "elastic-rules:00140285-b827-4aee-aa09-8113f58a08f3"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "detect-003",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.397035,
+              "3": 0.673544,
+              "5": 0.544943
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 0.02381,
+              "10": 0.02381,
+              "3": 0.02381,
+              "5": 0.02381
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1547.001",
+            "elastic-rules:97fc44d3-8dae-4019-ae83-298c3015600f",
+            "elastic-rules:70d12c9c-0dbd-4a1a-bc44-1467502c9cf6",
+            "elastic-rules:c8b150f0-0164-475b-a75e-74b47800a9ff",
+            "elastic-rules:a9b05c3b-b304-4bf9-970d-acdfaef2944c"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "detect-004",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.397035,
+              "3": 0.673544,
+              "5": 0.544943
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 0.012195,
+              "10": 0.012195,
+              "3": 0.012195,
+              "5": 0.012195
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1218.011",
+            "elastic-rules:e7125cea-9fe1-42a5-9a05-b0792cf86f5a",
+            "elastic-rules:181f6b23-3799-445e-9589-0018328a9e46",
+            "elastic-rules:6756ee27-9152-479b-9b73-54b5bbda301c",
+            "elastic-rules:cff92c41-2225-4763-b4ce-6f71e5bda5e6"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "cmd-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.023256,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1218.011",
+            "sigma:deprecated:d4d2574f-ac17-4d9e-b986-aeeae0dc8fe2",
+            "sigma:core:1775e15e-b61b-4d14-a1a3-80981298085a",
+            "sigma:core:f40017b3-cb2e-4335-ab5d-3babf679c1de",
+            "sigma:core:ae9c6a7c-9521-42a6-915e-5aaa8689d529"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "cmd-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.613443,
+              "3": 0.703918,
+              "5": 0.654809
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.4,
+              "3": 0.666667,
+              "5": 0.6
+            },
+            "recall": {
+              "1": 0.142857,
+              "10": 0.571429,
+              "3": 0.285714,
+              "5": 0.428571
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "gtfobins-lolbas:lolbas:Certutil.exe:cmd4",
+            "sigma:core:19b08b1c-861d-4e75-a1ef-ea0c1baf202b",
+            "gtfobins-lolbas:lolbas:Certutil.exe:cmd1",
+            "gtfobins-lolbas:lolbas:Certutil.exe:cmd2",
+            "sigma:core:214641c2-c579-4ecb-8427-0cf19df6842e"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "cmd-003",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.111111,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.082746,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.1,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.142857,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "sigma:core:526be59f-a573-4eea-b5f7-f0973207634d",
+            "sigma:core:3c89a1e8-0fba-449e-8f1b-8409d6267ec8",
+            "sigma:core:221b251a-357a-49a9-920a-271802777cc0",
+            "sigma:deprecated:c0e1c3d5-4381-4f18-8145-2583f06a1fe5",
+            "sigma:deprecated:9d1c72f5-43f0-4da5-9320-648cf2099dd0"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "net-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "ecs:destination.ip",
+            "elastic-rules:0171f283-ade7-4f87-9521-ac346c68cc9b",
+            "elastic-rules:1dd99dbf-b98d-4956-876b-f13bc0ce017f",
+            "elastic-rules:08933236-b27a-49f6-b04a-a616983f04b9",
+            "elastic-rules:2c40dfe2-c13e-48a8-8eff-fb9bfb2a7854"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "net-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "ecs:network.protocol",
+            "elastic-rules:cf53f532-9cc9-445a-9ae7-fced307ec53c",
+            "elastic-rules:4a4e23cf-78a2-449c-bac3-701924c269d3",
+            "elastic-rules:2e580225-2a58-48ef-938b-572933be06fe",
+            "elastic-rules:31295df3-277b-4c56-a1fb-84e31b4222a9"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "net-003",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "ecs:destination.port",
+            "elastic-rules:0171f283-ade7-4f87-9521-ac346c68cc9b",
+            "elastic-rules:6b341d03-1d63-41ac-841a-2009c86959ca",
+            "elastic-rules:77122db4-5876-4127-b91b-6c179eb21f88",
+            "elastic-rules:62b68eb2-1e47-4da7-85b6-8f478db5b272"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "ecs-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.2,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.386853,
+              "3": 0.0,
+              "5": 0.386853
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.1,
+              "3": 0.0,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 1.0,
+              "3": 0.0,
+              "5": 1.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "elastic-rules:b8e4c2a1-7f3d-4e9b-8c5a-1d0e6f2a4b8c",
+            "elastic-rules:b42e4b88-fc4a-417b-a45e-4d4a3db9fd41",
+            "elastic-rules:5dc3519c-1f56-42fc-9a70-7e6b705c2781",
+            "elastic-rules:6148b9f5-5b12-4704-9ef7-f4b4c5dd9bb5",
+            "ecs:process.command_line"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "ecs-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.083333,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "elastic-rules:1fe3b299-fbb5-4657-a937-1d746f2c711a",
+            "elastic-rules:b2c3d4e5-f6a7-8901-bcde-f123456789ab",
+            "elastic-rules:35df0dd8-092d-4a83-88c1-5151a804f31b",
+            "elastic-rules:640f79d1-571d-4f96-a9af-1194fc8cf763",
+            "elastic-rules:feafdc51-c575-4ed2-89dd-8e20badc2d6c"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "ecs-003",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "ecs:event.code",
+            "elastic-rules:28371aa1-14ed-46cf-ab5b-2fc7d1942278",
+            "elastic-rules:ab25369e-ea5e-46f1-9cd5-478a0a4a131a",
+            "elastic-rules:da87eee1-129c-4661-a7aa-57d0b9645fad",
+            "elastic-rules:c5f81243-56e0-47f9-b5bb-55a5ed89ba57"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "ecs-004",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "ecs:user.name",
+            "elastic-rules:ff4599cb-409f-4910-a239-52e4e6f532ff",
+            "elastic-rules:504e398f-5ad6-42c7-acd2-b2f4ddcdb0cf",
+            "elastic-rules:c3da1952-bae4-4672-aa57-2be7e6805381",
+            "elastic-rules:48b6edfc-079d-4907-b43c-baffa243270d"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "sigma-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.5,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.250501,
+              "3": 0.424959,
+              "5": 0.343821
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.017857,
+              "3": 0.017857,
+              "5": 0.017857
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "elastic-rules:5d1d6907-0747-4d5d-9b24-e4a18853dc0a",
+            "mitre:enterprise:T1053.005",
+            "elastic-rules:81ff45f8-f8c2-4e28-992e-5a0e8d98e0fe",
+            "elastic-rules:1719ee47-89b8-4407-9d55-6dff2629dd4c",
+            "elastic-rules:68921d85-d0dc-48b3-865f-43291ca2c4f2"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "sigma-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.558056,
+              "3": 0.673544,
+              "5": 0.544943
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.4,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 0.002857,
+              "10": 0.011429,
+              "3": 0.002857,
+              "5": 0.002857
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1218",
+            "mitre:enterprise:T1218.008",
+            "mitre:enterprise:T1218.007",
+            "mitre:enterprise:T1218.010",
+            "mitre:enterprise:T1218.009"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "elastic-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 0.428571,
+              "10": 0.773123,
+              "3": 0.615118,
+              "5": 0.688604
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "recall": {
+              "1": 0.007874,
+              "10": 0.07874,
+              "3": 0.023622,
+              "5": 0.03937
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "elastic-rules:fb01d790-9f74-4e76-97dd-b4b0f7bf6435",
+            "elastic-rules:4494c14f-5ff8-4ed2-8e99-bf816a1642fc",
+            "elastic-rules:b41a13c6-ba45-4bab-a534-df53d0cfed6a",
+            "elastic-rules:fd9484f2-1c56-44ae-8b28-dc1354e3a0e8",
+            "elastic-rules:290aca65-e94d-403b-ba0f-62f320e63f51"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "elastic-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.2,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.153594,
+              "3": 0.0,
+              "5": 0.210813
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.1,
+              "3": 0.0,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.020833,
+              "3": 0.0,
+              "5": 0.020833
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "elastic-rules:66da12b1-ac83-40eb-814c-07ed1d82b7b9",
+            "elastic-rules:ae8a142c-6a1d-4918-bea7-0b617e99ecfa",
+            "elastic-rules:c5dc3223-13a2-44a2-946c-e9dc0aa0449c",
+            "elastic-rules:f87e6122-ea34-11ee-a417-f661ea17fbce",
+            "mitre:enterprise:T1204.002"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "lolbas-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.0625,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1218.010",
+            "sigma:deprecated:8e2b24c9-4add-46a0-b4bb-0057b4e6187d",
+            "sigma:core:88a87a10-384b-4ad7-8871-2f9bf9259ce5",
+            "sigma:core:36e037c4-c228-4866-b6a3-48eb292b9955",
+            "sigma:core:c7e91a02-d771-4a6d-a700-42587e0b1095"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "lolbas-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.142857,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.420183,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.4,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.8,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "elastic-rules:9d110cb3-5f4b-4c9a-b9f5-53f0a1707ae2",
+            "sigma:core:33be4333-2c6b-44f4-ae28-102cdbde0a31",
+            "sigma:core:148431ce-4b70-403d-8525-fcc2993f29ea",
+            "mitre:enterprise:T1127.001",
+            "elastic-rules:fec7ccb7-6ed9-4f98-93ab-d6b366b063a0"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "lolbas-003",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.008621,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:G0098",
+            "mitre:enterprise:G0076",
+            "mitre:enterprise:G1051",
+            "mitre:enterprise:C0051",
+            "mitre:enterprise:C0034"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "multi-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.5,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.250501,
+              "3": 0.424959,
+              "5": 0.343821
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.004167,
+              "3": 0.004167,
+              "5": 0.004167
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "elastic-rules:c8cccb06-faf2-4cd5-886e-2c9636cfcb87",
+            "mitre:enterprise:T1059.001",
+            "elastic-rules:b5877334-677f-4fb9-86d5-a9721274223b",
+            "elastic-rules:9aeca498-1e3d-4496-9e12-6ef40047eb23",
+            "elastic-rules:74d31cb7-4a2c-44fe-9d1d-f375b9f3cb61"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "multi-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 0.397035,
+              "3": 0.673544,
+              "5": 0.544943
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.1,
+              "3": 0.333333,
+              "5": 0.2
+            },
+            "recall": {
+              "1": 0.012195,
+              "10": 0.012195,
+              "3": 0.012195,
+              "5": 0.012195
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:enterprise:T1218.011",
+            "elastic-rules:9aeca498-1e3d-4496-9e12-6ef40047eb23",
+            "elastic-rules:e7125cea-9fe1-42a5-9a05-b0792cf86f5a",
+            "elastic-rules:48e60a73-08e8-42aa-8f51-4ed92c64dbea",
+            "elastic-rules:181f6b23-3799-445e-9589-0018328a9e46"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "unresolved-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "recall": {
+              "1": 0.006329,
+              "10": 0.063291,
+              "3": 0.018987,
+              "5": 0.031646
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "elastic-rules:92d3a04e-6487-4b62-892d-70e640a590dc",
+            "elastic-rules:3aff6ab1-18bd-427e-9d4c-c5732110c261",
+            "elastic-rules:5370d4cd-2bb3-4d71-abf5-1e1d0ff5a2de",
+            "elastic-rules:fe794edd-487f-4a90-b285-3ee54f2af2d3",
+            "elastic-rules:323cb487-279d-4218-bcbd-a568efe930c6"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "unresolved-002",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.011236,
+            "ndcg": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "precision": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "recall": {
+              "1": 0.0,
+              "10": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "elastic-rules:92d3a04e-6487-4b62-892d-70e640a590dc",
+            "elastic-rules:fe794edd-487f-4a90-b285-3ee54f2af2d3",
+            "elastic-rules:c8cccb06-faf2-4cd5-886e-2c9636cfcb87",
+            "elastic-rules:eb9eb8ba-a983-41d9-9c93-a1c05112ca5e",
+            "elastic-rules:fa488440-04cc-41d7-9279-539387bf2a17"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "tactic-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 0.0,
+            "ndcg": {},
+            "precision": {},
+            "recall": {}
+          },
+          "skip_reason": "corpus grounds no relevant record for this case",
+          "skipped": true,
+          "top_records": [
+            "mitre:enterprise:T1104",
+            "mitre:enterprise:T1008",
+            "mitre:enterprise:T1001.003",
+            "mitre:enterprise:T1568",
+            "mitre:enterprise:T1001.002"
+          ],
+          "unresolved_seeds": []
+        },
+        {
+          "ambiguous_seeds": [],
+          "case_id": "ambiguous-001",
+          "retrieved_chunks": 120,
+          "scores": {
+            "mrr": 1.0,
+            "ndcg": {
+              "1": 1.0,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "precision": {
+              "1": 1.0,
+              "10": 0.2,
+              "3": 0.666667,
+              "5": 0.4
+            },
+            "recall": {
+              "1": 0.5,
+              "10": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            }
+          },
+          "skip_reason": "",
+          "skipped": false,
+          "top_records": [
+            "mitre:mobile:M1013",
+            "mitre:enterprise:M1013",
+            "mitre:ics:M0913",
+            "mitre:mobile:M1011",
+            "elastic-rules:9d110cb3-5f4b-4c9a-b9f5-53f0a1707ae1"
+          ],
+          "unresolved_seeds": []
+        }
+      ]
+    }
+  },
+  "security": [
+    {
+      "check": "unresolved_seed_reported",
+      "detail": "seed status=unresolved",
+      "identifier": "T1562",
+      "passed": true
+    },
+    {
+      "check": "no_fabricated_technique_node",
+      "detail": "no Technique node carries this identifier",
+      "identifier": "T1562",
+      "passed": true
+    },
+    {
+      "check": "no_fabricated_graph_evidence",
+      "detail": "0 items carried graph evidence",
+      "identifier": "T1562",
+      "passed": true
+    },
+    {
+      "check": "text_evidence_still_available",
+      "detail": "10 items returned via text",
+      "identifier": "T1562",
+      "passed": true
+    },
+    {
+      "check": "unresolved_seed_reported",
+      "detail": "seed status=unresolved",
+      "identifier": "T1562.001",
+      "passed": true
+    },
+    {
+      "check": "no_fabricated_technique_node",
+      "detail": "no Technique node carries this identifier",
+      "identifier": "T1562.001",
+      "passed": true
+    },
+    {
+      "check": "no_fabricated_graph_evidence",
+      "detail": "0 items carried graph evidence",
+      "identifier": "T1562.001",
+      "passed": true
+    },
+    {
+      "check": "text_evidence_still_available",
+      "detail": "10 items returned via text",
+      "identifier": "T1562.001",
+      "passed": true
+    },
+    {
+      "check": "missing_tactic_unresolved",
+      "detail": "seed status=unresolved",
+      "identifier": "TA0011",
+      "passed": true
+    },
+    {
+      "check": "no_tactic_nodes_fabricated",
+      "detail": "0 Tactic nodes in graph",
+      "identifier": "TA0011",
+      "passed": true
+    },
+    {
+      "check": "no_belongs_to_edges_fabricated",
+      "detail": "0 BELONGS_TO edges in graph",
+      "identifier": "TA0011",
+      "passed": true
+    },
+    {
+      "check": "ambiguity_reported",
+      "detail": "seed status=ambiguous",
+      "identifier": "M1013",
+      "passed": true
+    },
+    {
+      "check": "all_candidates_preserved",
+      "detail": "candidates=['mitre:Mitigation:enterprise:M1013', 'mitre:Mitigation:mobile:M1013']",
+      "identifier": "M1013",
+      "passed": true
+    },
+    {
+      "check": "no_domain_collapsed",
+      "detail": "domains=['enterprise', 'mobile']",
+      "identifier": "M1013",
+      "passed": true
+    },
+    {
+      "check": "no_arbitrary_selection",
+      "detail": "0 graph candidates from an ambiguous seed",
+      "identifier": "M1013",
+      "passed": true
+    },
+    {
+      "check": "no_fabricated_uses_field_edges",
+      "detail": "0 USES_FIELD edges; corpus states none",
+      "identifier": "USES_FIELD",
+      "passed": true
+    }
+  ],
+  "skipped": [
+    {
+      "case_id": "tactic-001",
+      "reason": "corpus grounds no relevant record for this case"
+    }
+  ]
+}

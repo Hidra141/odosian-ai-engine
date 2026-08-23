@@ -51,8 +51,12 @@ never a response, never a credential, and never the account that asked.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Final, assert_never, final
+
+StageCallback = Callable[[str, int, int, str], None]
+"""Signature: (stage_name, index_1based, total_stages, human_label)."""
 
 from src.config.settings import EngineConfig
 from src.context.context_builder import ContextBuilder, rule_context_from_parsed
@@ -171,25 +175,63 @@ class Pipeline:
             logger=resolved_logger,
         )
 
-    def run(self, request: EngineRequest) -> dict[str, Any]:
+    def with_provider(
+        self,
+        provider: LLMProvider,
+        config: EngineConfig,
+    ) -> Pipeline:
+        """Return a new pipeline reusing this one's retrieval service but with a different provider.
+
+        The retrieval service holds the in-memory knowledge index (4.4s build)
+        and is the expensive part. The engine, which holds the provider, is cheap
+        to reconstruct.
+        """
+        return Pipeline(
+            engine=ReasoningEngine.create(provider, config, logger=self.logger),
+            retrieval=self.retrieval,
+            runtime=self.runtime,
+            parser=self.parser,
+            extractor=self.extractor,
+            mapper=self.mapper,
+            builder=self.builder,
+            context_validator=self.context_validator,
+            validator=self.validator,
+            logger=self.logger,
+        )
+
+    def run(
+        self,
+        request: EngineRequest,
+        on_stage: StageCallback | None = None,
+    ) -> dict[str, Any]:
         """Run one request end to end and return the contract document."""
         request.validate()
         started = self.runtime.start()
-        package, input_query = self._prepare(request)
+        package, input_query = self._prepare(request, on_stage)
         self.context_validator.validate(package).raise_if_invalid()
-        result = self._reason(request, package)
+        result = self._reason(request, package, on_stage)
         accepted = self.validator.validate_or_raise(result, package)
+        if on_stage:
+            on_stage("format", 8, 8, "Formatting results")
         envelope = self.runtime.create(request, started=started, input_query=input_query)
         self._log(accepted, package, envelope.latency_ms)
         return format_result(accepted, envelope)
 
-    def _prepare(self, request: EngineRequest) -> tuple[ContextPackage, str]:
+    def _prepare(
+        self,
+        request: EngineRequest,
+        on_stage: StageCallback | None = None,
+    ) -> tuple[ContextPackage, str]:
         """Run every stage before reasoning, and return the package and its query."""
         if request.is_rule_operation:
-            return self._prepare_from_rule(request)
-        return self._prepare_from_requirement(request)
+            return self._prepare_from_rule(request, on_stage)
+        return self._prepare_from_requirement(request, on_stage)
 
-    def _prepare_from_rule(self, request: EngineRequest) -> tuple[ContextPackage, str]:
+    def _prepare_from_rule(
+        self,
+        request: EngineRequest,
+        on_stage: StageCallback | None = None,
+    ) -> tuple[ContextPackage, str]:
         """Prepare an analyze or enhance package from the subject supplied.
 
         One path for both forms the subject takes. A bare query is assembled
@@ -197,16 +239,26 @@ class Pipeline:
         first line is the sequence a rule already went through — the two forms
         differ in how the model is obtained, not in what is done with it.
         """
+        if on_stage:
+            on_stage("parse", 1, 8, "Parsing rule structure")
         parsed = (
             parsed_rule_from_query(request)
             if request.is_raw_query
             else self.parser.parse(request.rule_text)
         )
         self._require_rewritable_rule(request, parsed)
+        if on_stage:
+            on_stage("extract", 2, 8, "Extracting entities")
         entities = self.extractor.extract(parsed)
+        if on_stage:
+            on_stage("map", 3, 8, "Mapping to knowledge domains")
         mappings = self.mapper.map(entities)
         rule = rule_context_from_parsed(parsed)
+        if on_stage:
+            on_stage("retrieve", 4, 8, "Retrieving evidence from knowledge base")
         found = self.retrieval.for_rule(rule, mappings)
+        if on_stage:
+            on_stage("context", 5, 8, "Building grounded context")
         package = self.builder.build(
             request.operation.context_operation,
             rule=rule,
@@ -250,13 +302,21 @@ class Pipeline:
             + ". Analyze accepts this rule; enhance does not."
         )
 
-    def _prepare_from_requirement(self, request: EngineRequest) -> tuple[ContextPackage, str]:
+    def _prepare_from_requirement(
+        self,
+        request: EngineRequest,
+        on_stage: StageCallback | None = None,
+    ) -> tuple[ContextPackage, str]:
         """Prepare a generate package from the requirement alone.
 
         The parser, the extractor and the mapper are not called. There is no
         rule to parse, and a requirement is not one.
         """
+        if on_stage:
+            on_stage("retrieve", 4, 8, "Retrieving evidence from knowledge base")
         found = self.retrieval.for_requirement(request.requirement)
+        if on_stage:
+            on_stage("context", 5, 8, "Building grounded context")
         package = self.builder.build(
             request.operation.context_operation,
             rule=None,
@@ -266,19 +326,29 @@ class Pipeline:
         )
         return package, request.requirement
 
-    def _reason(self, request: EngineRequest, package: ContextPackage) -> OperationResult:
+    def _reason(
+        self,
+        request: EngineRequest,
+        package: ContextPackage,
+        on_stage: StageCallback | None = None,
+    ) -> OperationResult:
         """Dispatch to the engine method the operation names."""
+        if on_stage:
+            on_stage("reason", 6, 8, "AI reasoning with evidence")
         match request.operation:
             case ReasoningOperation.ANALYZE:
-                return self.engine.analyze(AnalyzeRequest(package=package))
+                result = self.engine.analyze(AnalyzeRequest(package=package))
             case ReasoningOperation.ENHANCE:
-                return self.engine.enhance(EnhanceRequest(package=package))
+                result = self.engine.enhance(EnhanceRequest(package=package))
             case ReasoningOperation.GENERATE:
-                return self.engine.generate(
+                result = self.engine.generate(
                     GenerateRequest(package=package, requirement=request.requirement)
                 )
             case _:  # pragma: no cover - the enum states three operations
                 assert_never(request.operation)
+        if on_stage:
+            on_stage("validate", 7, 8, "Validating claims against evidence")
+        return result
 
     def _log(
         self,

@@ -1,0 +1,55 @@
+// ============================================================================
+// BATCH DETAIL RESULT
+// ============================================================================
+// WHAT: Full detail of one batch run — every individual rule's outcome,
+// not just aggregate counts.
+//
+// WHEN: User clicks into a specific batch from the "Batch Runs" list.
+//
+// ENDPOINT: GET /api/analysis/batch/[id]   (status 200)
+// SOURCE:   src/app/api/analysis/batch/[id]/route.ts
+// ============================================================================
+
+{
+  "batch": {
+    "id": "c7d8e9f0-1a2b-3c4d-5e6f-7a8b9c0d1e2f",
+    "operation": "analyze",
+    "status": "completed",
+    "totalCount": 3,
+    "completedCount": 2,
+    "failedCount": 1,
+    "skippedCount": 0,
+    "createdBy": "Mohd Alkafaween",
+    "createdAt": "2026-07-29T10:00:00.000Z",
+    "updatedAt": "2026-07-29T10:14:00.000Z",
+
+    // One entry per rule in the batch
+    "items": [
+      {
+        "id": "i1",                          // the batch ITEM's own id (not the rule id, not the analysis id)
+        "ruleId": "r1",
+        "ruleTitle": "Brute Force Login Attempts",
+        "status": "completed",               // per-item lifecycle state
+        "error": null,                        // populated with a message if this item failed
+        "analysisId": "a1",                  // links to the resulting Analysis row — null until complete
+        "score": 65,                         // from the linked analysis — null until complete
+        "rating": "C",
+        "startedAt": "2026-07-29T10:00:05.000Z",
+        "completedAt": "2026-07-29T10:00:18.000Z"
+      },
+      {
+        // Example of a FAILED item — shows what an error looks like in-batch
+        "id": "i3",
+        "ruleId": "r3",
+        "ruleTitle": "Outbound Connection to Rare External IP",
+        "status": "failed",
+        "error": "AI provider authentication failed: A valid API key is required.",
+        "analysisId": null,
+        "score": null,
+        "rating": null,
+        "startedAt": "2026-07-29T10:00:31.000Z",
+        "completedAt": "2026-07-29T10:00:33.000Z"
+      }
+    ]
+  }
+}

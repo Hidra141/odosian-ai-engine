@@ -1,0 +1,43 @@
+// ============================================================================
+// APPLY-ENHANCEMENT RESULT
+// ============================================================================
+// WHAT: Commits a previously-generated Enhance result (03-enhance.jsonc)
+// onto the real Rule row. This is the WRITE step — not a preview. A
+// RuleVersion snapshot of the pre-change state is saved first, so the
+// previous version is never lost.
+//
+// WHEN: User clicks "Apply to Rule" on a completed Enhance result.
+//
+// ENDPOINT: POST /api/rules/[id]/apply-enhancement   (status 200)
+// SOURCE:   src/lib/apply-enhancement.ts
+//           (route.ts is a thin wrapper calling applyEnhancementToRule())
+//
+// REQUEST BODY — every field optional, normally the full 03-enhance.jsonc
+// output is sent straight through:
+//   {
+//     "enhancedTitle": "string",
+//     "enhancedDescription": "string",
+//     "enhancedQuery": "string",
+//     "newSeverity": "string",
+//     "newRiskScore": number,          // coerced server-side, see note below
+//     "investigationGuide": "string",
+//     "falsePositives": ["string"],
+//     "references": ["string"],
+//     "indexPatterns": ["string"]      // joined into Rule.index with ", "
+//   }
+//
+// SERVER-SIDE COERCION: newRiskScore is normalized via
+// Math.round(Number(value)), then clamped to 0-100. A stringified number
+// like "75" is accepted and converted, not rejected.
+// ============================================================================
+
+{
+  "success": true,   // always true on a 200 response — failures throw instead
+
+  // The rule's FINAL title after the update. If the rule's source is
+  // "generated" (i.e. it originally came from Generate mode) and the title
+  // doesn't already start with "#odosian ", that prefix is added here —
+  // marking it as AI-authored content that's been through a human-reviewed
+  // enhancement pass.
+  "title": "Suspicious Parent Process Execution via Console Window Host Proxy (Parent Process Verified)"
+}

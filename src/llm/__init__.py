@@ -32,8 +32,10 @@ from .exceptions import (
     LLMServiceUnavailableError,
     LLMTimeoutError,
 )
+from .anthropic_provider import AnthropicProvider
 from .gemini_provider import PROVIDER_NAME, GeminiProvider
 from .json_parser import parse_json, parse_json_object
+from .openai_provider import OpenAICompatibleProvider
 from .provider import LLMProvider
 from .request import GenerationParameters, LLMRequest
 from .response import LLMResponse, TokenUsage
@@ -49,6 +51,7 @@ from .types import (
 
 __all__ = [
     "PROVIDER_NAME",
+    "AnthropicProvider",
     "FinishReason",
     "GeminiProvider",
     "GenerationParameters",
@@ -64,6 +67,7 @@ __all__ = [
     "LLMModelUnavailableError",
     "LLMProvider",
     "LLMProviderError",
+    "OpenAICompatibleProvider",
     "LLMRateLimitError",
     "LLMRequest",
     "LLMResponse",
