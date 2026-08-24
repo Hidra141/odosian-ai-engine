@@ -651,7 +651,10 @@ def _envelope(operation: ReasoningOperation) -> tuple[FieldSpec, ...]:
         FieldSpec(
             name="metadata",
             kind=FieldKind.STRING_MAP,
-            description="Additional structured detail as string values. Empty object if none.",
+            description=(
+                "Additional structured detail. Every value is a JSON string, even one that "
+                "represents a number or count — write 3 as \"3\", not 3. Empty object if none."
+            ),
         ),
         FieldSpec(
             name="uncertainties",

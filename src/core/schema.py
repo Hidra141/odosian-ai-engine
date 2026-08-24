@@ -375,6 +375,7 @@ def _json_field(declared: FieldSpec) -> dict[str, JSONValue]:
             node["items"] = item
         case FieldKind.STRING_MAP:
             node["type"] = "object"
+            node["additionalProperties"] = {"type": "string"}
     return node
 
 
@@ -405,7 +406,9 @@ def _example(declared: FieldSpec) -> object:
         case FieldKind.STRING_ARRAY:
             return [_ENUM_JOIN.join(declared.enum)] if declared.enum else ["string"]
         case FieldKind.STRING_MAP:
-            return {"key": "value"}
+            # A count or score-like key is the case worth showing: its value is
+            # still a quoted string, never a bare JSON number.
+            return {"changes_count": "3", "region": "us-east-1"}
 
 
 def _rule_lines(spec: ObjectSpec, prefix: str) -> Iterator[tuple[str, str]]:

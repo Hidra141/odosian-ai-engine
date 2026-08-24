@@ -47,7 +47,9 @@ Field rules:
   `<TACTIC_ID>`, a technique as `<TECHNIQUE_ID>`, a sub-technique with its dotted suffix.
   Copy the identifier you were given; never assemble one to fit the shape of a placeholder.
 - ECS field names keep their official dotted form, exactly as supplied.
-- Numbers are JSON numbers and booleans are JSON booleans. Never quote either.
+- Numbers are JSON numbers and booleans are JSON booleans. Never quote either — except
+  inside a field whose own rule calls for string values (such as `metadata`), where
+  every value is a quoted JSON string even when what it represents is a number or count.
 - Every string is a single line. Express structure with nested objects and arrays, never
   with newlines or Markdown inside a string.
 - Do not add fields the operation schema does not define, and do not rename its fields.
