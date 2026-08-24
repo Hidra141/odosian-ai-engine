@@ -190,8 +190,11 @@ def _recommendation(entry: JSONObject) -> Recommendation:
 
 def _evidence(entry: JSONObject) -> Evidence:
     """Build one citation."""
+    raw_id = _text(entry, "item_id")
+    if raw_id.startswith("[") and raw_id.endswith("]"):
+        raw_id = raw_id[1:-1]
     return Evidence(
-        item_id=_text(entry, "item_id"),
+        item_id=raw_id,
         source=EvidenceSource(_text(entry, "source")),
         identifier=_text(entry, "identifier"),
         detail=_text(entry, "detail"),
