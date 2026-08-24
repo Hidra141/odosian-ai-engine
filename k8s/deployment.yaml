@@ -51,11 +51,20 @@ spec:
               port: 8000
             initialDelaySeconds: 10
             periodSeconds: 30
-            timeoutSeconds: 5
+            timeoutSeconds: 10
+            # On a dev machine running under WSL2, the host VM can be paused
+            # and resumed (Windows idle-suspend / sleep) for well over a
+            # minute, freezing every container's wall clock along with it.
+            # A short failureThreshold reads that as a hung process and
+            # kills the container, discarding whatever request was mid-flight
+            # even though nothing was actually wrong. 5 failures at 30s apart
+            # tolerates a multi-minute freeze before restarting for real.
+            failureThreshold: 5
           readinessProbe:
             httpGet:
               path: /health
               port: 8000
             initialDelaySeconds: 15
             periodSeconds: 10
-            timeoutSeconds: 5
+            timeoutSeconds: 8
+            failureThreshold: 4
