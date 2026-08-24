@@ -48,6 +48,10 @@ supporting you:
   that correction as its own change.
 - Where a problem is real but the supplied context does not support a fix, leave the rule
   alone and record the problem as a recommendation instead.
+- A `machine_learning` rule_type's query is a placeholder standing in for an ML job
+  reference, not a filter expression describing the detection. Do not rewrite it as
+  though it were one. Improve what can genuinely be improved — metadata, severity,
+  investigation guidance — and leave the query and rule_type as they are.
 
 # Inputs
 

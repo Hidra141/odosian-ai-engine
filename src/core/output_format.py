@@ -361,7 +361,10 @@ RULE_SPEC: Final[ObjectSpec] = ObjectSpec(
             description=(
                 "The Elastic rule type. Constrains which language below is valid — see its "
                 "description. Preserve the original rule's type unless the change you are "
-                "making genuinely requires switching to a different one."
+                "making genuinely requires switching to a different one. A "
+                "'machine_learning' rule's query is a placeholder, not a real filter "
+                "expression — carry it through unchanged rather than rewriting it as if it "
+                "expressed the detection logic."
             ),
             enum=_values(OutputRuleType),
         ),

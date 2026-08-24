@@ -175,13 +175,26 @@ class OutputLanguage(StrEnum):
 
 
 class OutputRuleType(StrEnum):
-    """The rule type a produced rule declares."""
+    """The rule type a produced rule declares.
+
+    ``INDICATOR_MATCH`` is a query rule augmented with an indicator-index
+    lookup; its own query and language behave exactly like ``QUERY``'s, and
+    the indicator-matching fields themselves (threat index, threat query,
+    threat mapping) are not modelled here.
+
+    ``MACHINE_LEARNING`` declares an ML job by id rather than a query the
+    caller writes. It is recognised so a result is never forced into an
+    unrelated type, not because its query can be meaningfully authored or
+    improved — see ``RULE_SPEC``'s ``rule_type`` description.
+    """
 
     QUERY = "query"
     THRESHOLD = "threshold"
     EQL = "eql"
     NEW_TERMS = "new_terms"
     ESQL = "esql"
+    INDICATOR_MATCH = "indicator_match"
+    MACHINE_LEARNING = "machine_learning"
 
 
 class ChangeCategory(StrEnum):

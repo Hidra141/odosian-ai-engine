@@ -101,6 +101,8 @@ _LANGUAGES_FOR_TYPE: Final[dict[OutputRuleType, frozenset[OutputLanguage]]] = {
     OutputRuleType.QUERY: frozenset({OutputLanguage.KQL, OutputLanguage.LUCENE}),
     OutputRuleType.THRESHOLD: frozenset({OutputLanguage.KQL, OutputLanguage.LUCENE}),
     OutputRuleType.NEW_TERMS: frozenset({OutputLanguage.KQL, OutputLanguage.LUCENE}),
+    OutputRuleType.INDICATOR_MATCH: frozenset({OutputLanguage.KQL, OutputLanguage.LUCENE}),
+    OutputRuleType.MACHINE_LEARNING: frozenset({OutputLanguage.KQL, OutputLanguage.LUCENE}),
 }
 """Which query languages each Elastic rule type can actually be written in.
 
