@@ -35,8 +35,12 @@ supporting you:
 
 # Constraints
 
-- Keep the original query language unless the original language cannot express a required
-  correction. If you change it, say why in the accounting for that change.
+- Keep the original rule_type and query language unless the original language cannot
+  express a required correction. rule_type and language are not independent: eql only
+  pairs with eql, esql only with esql, and every other rule_type only with kql or lucene.
+  If you change the language, change rule_type to match in the same edit — a rule_type
+  and language that do not agree is a rule that will not load, not a valid combination
+  to leave for later. Say why in the accounting for that change.
 - Every change must trace to a specific problem in the original rule. A change you cannot
   justify is a change you do not make.
 - Preserve the rule's metadata unless a change requires updating it. Where severity, risk

@@ -358,13 +358,23 @@ RULE_SPEC: Final[ObjectSpec] = ObjectSpec(
         FieldSpec(
             name="rule_type",
             kind=FieldKind.STRING,
-            description="The Elastic rule type.",
+            description=(
+                "The Elastic rule type. Constrains which language below is valid — see its "
+                "description. Preserve the original rule's type unless the change you are "
+                "making genuinely requires switching to a different one."
+            ),
             enum=_values(OutputRuleType),
         ),
         FieldSpec(
             name="language",
             kind=FieldKind.STRING,
-            description="The query language the query is written in.",
+            description=(
+                "The query language the query is written in. Must pair with rule_type: "
+                "'eql' only with rule_type 'eql', 'esql' only with rule_type 'esql', and "
+                "'kql' or 'lucene' with every other rule_type. A rule_type and language "
+                "that do not pair is not a stylistic mismatch — it is a rule that will not "
+                "load."
+            ),
             enum=_values(OutputLanguage),
         ),
         FieldSpec(
