@@ -50,9 +50,20 @@ class HealthResponse(BaseModel):
     pipeline_ready: bool = False
 
 
+class StructuredIssue(BaseModel):
+    """One validation issue with full context."""
+
+    code: str
+    severity: str
+    category: str
+    path: str
+    message: str
+
+
 class ErrorResponse(BaseModel):
     """Standard error response."""
 
     error: str
     category: str = ""
     issues: list[str] = Field(default_factory=list)
+    structured_issues: list[StructuredIssue] = Field(default_factory=list)

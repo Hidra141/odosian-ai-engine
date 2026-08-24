@@ -60,6 +60,7 @@ from .schemas import (
     GenerateRequest as GenerateBody,
     HealthResponse,
     ProviderConfig,
+    StructuredIssue,
 )
 
 logger = logging.getLogger(__name__)
@@ -321,12 +322,23 @@ def _error_response(error: Exception) -> JSONResponse:
     """Map engine exceptions to HTTP responses."""
     if isinstance(error, ValidationEngineError):
         category = error.category.value if error.category else "validation"
+        structured = [
+            StructuredIssue(
+                code=issue.code.value,
+                severity=issue.severity.value,
+                category=issue.category.value,
+                path=issue.path,
+                message=issue.message,
+            )
+            for issue in error.report.errors
+        ]
         return JSONResponse(
             status_code=422,
             content=ErrorResponse(
                 error=str(error),
                 category=category,
                 issues=list(error.issues),
+                structured_issues=structured,
             ).model_dump(),
         )
 
