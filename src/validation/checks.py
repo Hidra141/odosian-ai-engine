@@ -58,7 +58,7 @@ from .supplied import (
 )
 from .types import IssueSeverity, ValidationCode
 
-MULTILINE_PERMITTED: Final[tuple[str, ...]] = (".code_snippet",)
+MULTILINE_PERMITTED: Final[tuple[str, ...]] = (".code_snippet", ".query")
 """The paths the one-line rule does not apply to.
 
 Stated as a closed list of path endings rather than as a flag a caller could
