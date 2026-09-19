@@ -1,11 +1,14 @@
-# 00_Architecture.md
+# Architecture
 
-Version: 1.0
-Status: Draft
+**Version:** 1.0 · **Status:** Draft · **Stage:** 02 — Architecture
+
+> [!NOTE]
+> A design-stage document. For the architecture as built, including the HTTP service and
+> the eight-stage pipeline, see the [project README](../../README.md).
 
 ---
 
-# Purpose
+## Purpose
 
 This document defines the high-level architecture of the ODOSIAN AI Engine.
 
@@ -15,7 +18,7 @@ This document serves as the primary architectural reference for developers, revi
 
 ---
 
-# Scope
+## Scope
 
 This document defines:
 
@@ -39,7 +42,7 @@ This document does not define:
 
 ---
 
-# Architectural Principles
+## Architectural Principles
 
 The ODOSIAN AI Engine follows these principles:
 
@@ -55,54 +58,56 @@ The ODOSIAN AI Engine follows these principles:
 
 ---
 
-# System Overview
+## System Overview
 
 The AI Engine transforms a cybersecurity detection rule into an AI-generated explanation through a deterministic processing pipeline.
 
-```
-Detection Rule
-      │
-      ▼
-Rule Parser
-      │
-      ▼
-Entity Extraction
-      │
-      ▼
-Entity Mapping
-      │
-      ▼
-Knowledge Base
-      │
-      ├──────────────┐
-      ▼              │
-Knowledge Graph      │
-      │              │
-      └──────┬───────┘
-             ▼
-          GraphRAG
-             │
-             ▼
-      Context Builder
-             │
-             ▼
-        LLM Provider
-             │
-             ▼
-    Validation Engine
-             │
-             ▼
-         Formatter
-             │
-             ▼
-      Final Response
+```mermaid
+%%{init: {"flowchart": {"rankSpacing": 26, "nodeSpacing": 32}}}%%
+flowchart TB
+    IN(["Detection Rule"]) --> A["Rule Parser"]
+    A --> B["Entity Extraction"] --> C["Entity Mapping"] --> D["Knowledge Base"]
+    D --> E["Knowledge Graph"]
+    D --> F["GraphRAG"]
+    E --> F
+    F --> G["Context Builder"] --> H["LLM Provider"] --> I["Validation Engine"]
+    I --> J["Formatter"] --> OUT(["Final Response"])
+
+    classDef io fill:#e6fcf5,stroke:#0ca678,color:#052e26
+    classDef comp fill:#e8f0fe,stroke:#4c6ef5,color:#0b1a3a
+    class IN,OUT io
+    class A,B,C,D,E,F,G,H,I,J comp
 ```
 
 ---
 
-# Architectural Layers
+## Architectural Layers
 
-## Client Layer
+```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 520}}}%%
+flowchart TB
+    L1["<b>Client</b> · REST API, CLI, SDK — transport only"]
+    L2["<b>Application</b> · orchestration and lifecycle — no business logic"]
+    L3["<b>Domain</b> · rules, knowledge, graph, context, validation — the core"]
+    L4["<b>Integration</b> · adapters for providers, sources, graph databases"]
+    L5["<b>Infrastructure</b> · config, logging, caching, storage — no business logic"]
+
+    L1 --> L2 --> L3 --> L4 --> L5
+
+    classDef client fill:#e6fcf5,stroke:#0ca678,color:#052e26
+    classDef app fill:#fff4e6,stroke:#f08c00,color:#3a2a0b
+    classDef domain fill:#e8f0fe,stroke:#4c6ef5,color:#0b1a3a
+    classDef infra fill:#f1f3f5,stroke:#868e96,color:#212529
+    class L1 client
+    class L2 app
+    class L3 domain
+    class L4,L5 infra
+```
+
+Dependencies flow downward only. A layer never reaches back up, and the domain layer never
+touches infrastructure directly.
+
+### Client Layer
 
 Handles incoming requests from external clients.
 
@@ -121,7 +126,7 @@ Responsibilities:
 
 ---
 
-## Application Layer
+### Application Layer
 
 Coordinates the execution of the processing pipeline.
 
@@ -136,7 +141,7 @@ The Application Layer contains no business logic.
 
 ---
 
-## Domain Layer
+### Domain Layer
 
 Contains the core intelligence of the system.
 
@@ -153,7 +158,7 @@ The Domain Layer is independent of infrastructure and external providers.
 
 ---
 
-## Integration Layer
+### Integration Layer
 
 Provides adapters for external systems.
 
@@ -171,7 +176,7 @@ Responsibilities:
 
 ---
 
-## Infrastructure Layer
+### Infrastructure Layer
 
 Provides technical capabilities.
 
@@ -187,7 +192,7 @@ No business logic belongs here.
 
 ---
 
-# Core Components
+## Core Components
 
 | Component | Responsibility |
 |-----------|----------------|
@@ -204,7 +209,7 @@ No business logic belongs here.
 
 ---
 
-# Execution Pipeline
+## Execution Pipeline
 
 The processing workflow is strictly sequential.
 
@@ -222,7 +227,7 @@ The processing workflow is strictly sequential.
 
 ---
 
-# Dependency Rules
+## Dependency Rules
 
 The architecture follows these dependency rules:
 
@@ -234,7 +239,7 @@ The architecture follows these dependency rules:
 
 ---
 
-# Cross-Cutting Concerns
+## Cross-Cutting Concerns
 
 The following concerns apply across all components:
 
@@ -249,7 +254,7 @@ These concerns remain isolated from business logic.
 
 ---
 
-# Performance Considerations
+## Performance Considerations
 
 The architecture is designed to support:
 
@@ -263,7 +268,7 @@ Performance optimizations must not alter business behavior.
 
 ---
 
-# Security Considerations
+## Security Considerations
 
 The architecture enforces:
 
@@ -277,7 +282,7 @@ Sensitive information must never be exposed outside authorized boundaries.
 
 ---
 
-# Extensibility
+## Extensibility
 
 The architecture supports future extension through:
 
@@ -292,7 +297,7 @@ No existing component should require modification when adding a new provider.
 
 ---
 
-# Architectural Constraints
+## Architectural Constraints
 
 The system must:
 
@@ -304,7 +309,7 @@ The system must:
 
 ---
 
-# Future Evolution
+## Future Evolution
 
 The architecture is prepared for:
 

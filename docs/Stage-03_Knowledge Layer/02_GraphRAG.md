@@ -1,11 +1,15 @@
-# 02_GraphRAG.md
+# GraphRAG
 
-Version: 1.0
-Status: Draft
+**Version:** 1.0 · **Status:** Draft · **Stage:** 03 — Knowledge Layer
+
+> [!NOTE]
+> A design-stage document. The shipped retriever is hybrid — a lexical index and graph
+> traversal merged by chunk and ranked deterministically. See the
+> [project README](../../README.md).
 
 ---
 
-# Purpose
+## Purpose
 
 This document defines the Graph Retrieval-Augmented Generation (GraphRAG) architecture used by the ODOSIAN AI Engine.
 
@@ -17,7 +21,7 @@ Its only responsibility is selecting the best evidence.
 
 ---
 
-# Scope
+## Scope
 
 This document defines:
 
@@ -37,7 +41,7 @@ It does NOT define:
 
 ---
 
-# Philosophy
+## Philosophy
 
 GraphRAG answers one question:
 
@@ -51,33 +55,29 @@ Reasoning belongs to the LLM.
 
 ---
 
-# High-Level Pipeline
+## High-Level Pipeline
 
-```
-Mapped Entities
-       │
-       ▼
-Knowledge Graph
-       │
-       ▼
-Graph Traversal
-       │
-       ▼
-Evidence Collection
-       │
-       ▼
-Evidence Ranking
-       │
-       ▼
-Context Optimization
-       │
-       ▼
-Context Builder
+```mermaid
+flowchart TB
+    subgraph R1[" "]
+        direction LR
+        A["Mapped Entities"] --> B["Knowledge Graph"] --> C["Graph Traversal"]
+    end
+    subgraph R2[" "]
+        direction LR
+        D["Evidence Collection"] --> E["Evidence Ranking"] --> F["Context Optimization"]
+    end
+    R1 --> R2
+    R2 --> G["Context Builder"]
+    classDef n fill:#e8f0fe,stroke:#4c6ef5,color:#0b1a3a
+    classDef out fill:#e6fcf5,stroke:#0ca678,color:#052e26
+    class A,B,C,D,E,F n
+    class G out
 ```
 
 ---
 
-# Step 1 — Starting Point
+## Step 1 — Starting Point
 
 GraphRAG receives:
 
@@ -87,20 +87,15 @@ GraphRAG receives:
 
 Example:
 
-```
-Technique:
-T1059
-
-Process:
-powershell.exe
-
-Command:
-Invoke-WebRequest
-```
+| Input | Example value |
+| --- | --- |
+| Technique | `T1059` |
+| Process | `powershell.exe` |
+| Command | `Invoke-WebRequest` |
 
 ---
 
-# Step 2 — Graph Traversal
+## Step 2 — Graph Traversal
 
 GraphRAG searches the graph.
 
@@ -120,7 +115,7 @@ Unlimited traversal is prohibited.
 
 ---
 
-# Step 3 — Evidence Collection
+## Step 3 — Evidence Collection
 
 Collected evidence may include:
 
@@ -135,7 +130,7 @@ Evidence must remain traceable.
 
 ---
 
-# Step 4 — Evidence Ranking
+## Step 4 — Evidence Ranking
 
 Not every retrieved record should reach the LLM.
 
@@ -154,7 +149,7 @@ Ranking algorithms remain implementation-specific.
 
 ---
 
-# Step 5 — Context Optimization
+## Step 5 — Context Optimization
 
 Large knowledge should be reduced before reaching the LLM.
 
@@ -166,29 +161,19 @@ Optimization may include:
 - Context summarization
 - Token budgeting
 
-The goal is:
-
-Maximum knowledge
-
-Minimum tokens
+The goal is **maximum knowledge for minimum tokens**.
 
 ---
 
-# Step 6 — Context Delivery
+## Step 6 — Context Delivery
 
-GraphRAG returns:
-
-Retrieved Context
-
-This becomes input for:
-
-Context Builder
+GraphRAG returns **Retrieved Context**, which becomes the input to the **Context Builder**.
 
 GraphRAG does not communicate directly with the LLM.
 
 ---
 
-# Retrieval Rules
+## Retrieval Rules
 
 GraphRAG should:
 
@@ -200,39 +185,23 @@ GraphRAG should:
 
 ---
 
-# Evidence Priority
+## Evidence Priority
 
-Recommended priority:
+Recommended priority, strongest first:
 
-1. Directly referenced knowledge
-
-↓
-
-2. Parent relationships
-
-↓
-
-3. Child relationships
-
-↓
-
-4. Related detections
-
-↓
-
-5. Related software
-
-↓
-
-6. Threat groups
-
-↓
-
-7. Campaigns
+| | Evidence |
+| --- | --- |
+| 1 | Directly referenced knowledge |
+| 2 | Parent relationships |
+| 3 | Child relationships |
+| 4 | Related detections |
+| 5 | Related software |
+| 6 | Threat groups |
+| 7 | Campaigns |
 
 ---
 
-# Context Budget
+## Context Budget
 
 The retrieval system should respect a context budget.
 
@@ -246,61 +215,47 @@ GraphRAG should optimize quality rather than quantity.
 
 ---
 
-# Explainability
+## Explainability
 
-Every evidence item returned should answer:
-
-Why was this retrieved?
-
-Every result should remain explainable.
+Every evidence item returned should be able to answer **"why was this retrieved?"** — every
+result remains explainable.
 
 ---
 
-# Runtime Flow
+## Runtime Flow
 
-```
-Mapped Entities
-        │
-        ▼
-Graph Lookup
-        │
-        ▼
-Traversal
-        │
-        ▼
-Evidence Collection
-        │
-        ▼
-Ranking
-        │
-        ▼
-Optimization
-        │
-        ▼
-Retrieved Context
+```mermaid
+flowchart TB
+    subgraph S1[" "]
+        direction LR
+        A["Mapped Entities"] --> B["Graph Lookup"] --> C["Traversal"]
+    end
+    subgraph S2[" "]
+        direction LR
+        D["Evidence Collection"] --> E["Ranking"] --> F["Optimization"]
+    end
+    S1 --> S2
+    S2 --> G(["Retrieved Context"])
+    classDef n fill:#f3f0ff,stroke:#7048e8,color:#1d0b3a
+    classDef out fill:#e6fcf5,stroke:#0ca678,color:#052e26
+    class A,B,C,D,E,F n
+    class G out
 ```
 
 ---
 
-# Responsibilities
+## Responsibilities
 
-GraphRAG is responsible for:
-
-- Graph traversal
-- Evidence selection
-- Ranking
-- Context optimization
-
-GraphRAG is NOT responsible for:
-
-- Prompt generation
-- AI reasoning
-- Response validation
-- Output formatting
+| ✔ GraphRAG is responsible for | ✘ GraphRAG is not responsible for |
+| --- | --- |
+| Graph traversal | Prompt generation |
+| Evidence selection | AI reasoning |
+| Ranking | Response validation |
+| Context optimization | Output formatting |
 
 ---
 
-# Future Extensions
+## Future Extensions
 
 Future versions may support:
 
@@ -314,17 +269,10 @@ Future versions may support:
 
 ---
 
-# Boundary
+## Boundary
 
-GraphRAG produces:
-
-Evidence
-
-The AI produces:
-
-Reasoning
-
-These responsibilities must remain separate.
+GraphRAG produces **evidence**. The AI produces **reasoning**. These responsibilities must remain
+separate.
 
 ---
 

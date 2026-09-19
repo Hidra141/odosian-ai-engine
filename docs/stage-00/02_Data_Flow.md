@@ -1,272 +1,186 @@
 # Data Flow
 
-Version: 1.0
-Status: Draft
+**Version:** 1.0 · **Status:** Draft · **Stage:** 00 — Foundations
+
+> [!NOTE]
+> A design-stage document. The engine as built runs eight stages, with knowledge base, knowledge
+> graph, and GraphRAG collapsed into one `retrieve` stage — see the
+> [project README](../../README.md).
 
 ---
 
-# Purpose
+## Purpose
 
-This document defines how data moves through the ODOSIAN AI Engine from the moment a request is received until the final validated response is returned.
-
----
-
-# Data Flow Overview
-
-Request
-    │
-    ▼
-Rule Parser
-    │
-    ▼
-Entity Extraction
-    │
-    ▼
-Entity Mapping
-    │
-    ▼
-Knowledge Base
-    │
-    ▼
-Knowledge Graph
-    │
-    ▼
-GraphRAG
-    │
-    ▼
-Context Builder
-    │
-    ▼
-LLM Provider
-    │
-    ▼
-Response Formatter
-    │
-    ▼
-Validation Engine
-    │
-    ▼
-JSON Response
+This document defines how data moves through the ODOSIAN AI Engine from the moment a request is
+received until the final validated response is returned.
 
 ---
 
-# Step 1 — Request
+## Overview
 
-Input:
+```mermaid
+%%{init: {"flowchart": {"rankSpacing": 26, "nodeSpacing": 32}}}%%
+flowchart TB
+    R(["Request"]) --> S2["<b>1</b> Rule Parser"]
+    S2 --> S3["<b>2</b> Entity Extraction"]
+    S3 --> S4["<b>3</b> Entity Mapping"]
+    S4 --> S5["<b>4</b> Knowledge Base"]
+    S5 --> S6["<b>5</b> Knowledge Graph"]
+    S6 --> S7["<b>6</b> GraphRAG"]
+    S7 --> S8["<b>7</b> Context Builder"]
+    S8 --> S9["<b>8</b> LLM Provider"]
+    S9 --> S10["<b>9</b> Response Formatter"]
+    S10 --> S11["<b>10</b> Validation Engine"]
+    S11 --> OUT(["JSON Response"])
 
-- Rule Text
-- Operation Type
-  - Analyze
-  - Enhance
-  - Generate
+    classDef io fill:#e6fcf5,stroke:#0ca678,color:#052e26
+    classDef step fill:#e8f0fe,stroke:#4c6ef5,color:#0b1a3a
+    class R,OUT io
+    class S2,S3,S4,S5,S6,S7,S8,S9,S10,S11 step
+```
 
-Output:
+Every step receives one contract and produces the next. Nothing skips ahead, and nothing reaches
+back.
 
-Raw Request Object
-
----
-
-# Step 2 — Rule Parser
-
-Responsibilities
-
-- Parse the rule
-- Detect syntax errors
-- Normalize the rule
-- Build a structured object
-
-Output
-
-Structured Rule Object
-
----
-
-# Step 3 — Entity Extraction
-
-Responsibilities
-
-Extract cybersecurity entities such as:
-
-- MITRE Techniques
-- Fields
-- Products
-- Data Sources
-- Commands
-- File Paths
-- Registry Keys
-- Processes
-- IP Addresses
-- Domains
-
-Output
-
-Extracted Entity List
+| Step | Stage | Receives | Produces |
+| --- | --- | --- | --- |
+| — | Request | rule text, operation type | Raw Request Object |
+| 1 | Rule Parser | Raw Request Object | Structured Rule Object |
+| 2 | Entity Extraction | Structured Rule Object | Extracted Entity List |
+| 3 | Entity Mapping | Extracted Entity List | Mapped Entities |
+| 4 | Knowledge Base | Mapped Entities | Knowledge Documents |
+| 5 | Knowledge Graph | Mapped Entities | Knowledge Subgraph |
+| 6 | GraphRAG | Knowledge Subgraph | Relevant Context |
+| 7 | Context Builder | everything above | Final Prompt Context |
+| 8 | LLM Provider | Final Prompt Context | Raw AI Response |
+| 9 | Response Formatter | Raw AI Response | Structured Response |
+| 10 | Validation Engine | Structured Response | Validated Response |
 
 ---
 
-# Step 4 — Entity Mapping
+## Request
 
-Responsibilities
+**Input**
 
-Map extracted entities to standardized identifiers.
+- Rule text
+- Operation type — one of `analyze`, `enhance`, `generate`
 
-Example:
-
-"powershell"
-
-↓
-
-LOLBAS
-
-↓
-
-MITRE
-
-↓
-
-Elastic ECS
-
-Output
-
-Mapped Entities
+**Output** — Raw Request Object
 
 ---
 
-# Step 5 — Knowledge Base
+## Step 1 — Rule Parser
 
-Responsibilities
+Parses the rule, detects syntax errors, normalises it, and builds a structured object.
 
-Retrieve documentation and reference knowledge related to mapped entities.
-
-Sources may include:
-
-- MITRE ATT&CK
-- Sigma
-- Elastic
-- Atomic Red Team
-- LOLBAS
-- Internal Knowledge
-
-Output
-
-Knowledge Documents
+**Output** — Structured Rule Object
 
 ---
 
-# Step 6 — Knowledge Graph
+## Step 2 — Entity Extraction
 
-Responsibilities
+Extracts cybersecurity entities from the parsed rule:
 
-Load relationships between entities.
+| | |
+| --- | --- |
+| MITRE techniques | Commands |
+| Fields | File paths |
+| Products | Registry keys |
+| Data sources | Processes |
+| Domains | IP addresses |
 
-Example
-
-PowerShell
-
-↓
-
-Technique
-
-↓
-
-Detection
-
-↓
-
-Data Source
-
-↓
-
-Relevant Rule
-
-Output
-
-Knowledge Subgraph
+**Output** — Extracted Entity List
 
 ---
 
-# Step 7 — GraphRAG
+## Step 3 — Entity Mapping
 
-Responsibilities
+Maps extracted entities to standardised identifiers.
 
-Retrieve only the most relevant graph context.
+```mermaid
+flowchart LR
+    E["the token <b>powershell</b>"] --> L["LOLBAS"] --> M["MITRE ATT&CK"] --> C["Elastic ECS"]
+    classDef n fill:#e8f0fe,stroke:#4c6ef5,color:#0b1a3a
+    class E,L,M,C n
+```
 
-Output
-
-Relevant Context
-
----
-
-# Step 8 — Context Builder
-
-Responsibilities
-
-Merge:
-
-- Parsed Rule
-- Extracted Entities
-- Mapped Entities
-- Knowledge Documents
-- Graph Context
-- User Operation
-
-Output
-
-Final Prompt Context
+**Output** — Mapped Entities
 
 ---
 
-# Step 9 — LLM Provider
+## Step 4 — Knowledge Base
 
-Responsibilities
+Retrieves documentation and reference knowledge related to the mapped entities.
 
-Execute inference using the configured LLM.
+Sources may include MITRE ATT&CK, Sigma, Elastic, Atomic Red Team, LOLBAS, and internal knowledge.
 
-Input
-
-Prompt Context
-
-Output
-
-Raw AI Response
+**Output** — Knowledge Documents
 
 ---
 
-# Step 10 — Response Formatter
+## Step 5 — Knowledge Graph
 
-Responsibilities
+Loads the relationships between entities.
 
-Convert raw AI output into the project's JSON schema.
+```mermaid
+flowchart LR
+    P["PowerShell"] --> T["Technique"] --> D["Detection"] --> S["Data Source"] --> R["Relevant Rule"]
+    classDef n fill:#f3f0ff,stroke:#7048e8,color:#1d0b3a
+    class P,T,D,S,R n
+```
 
-Output
-
-Structured Response
-
----
-
-# Step 11 — Validation Engine
-
-Responsibilities
-
-Validate:
-
-- JSON Schema
-- Required Fields
-- Confidence
-- Consistency
-- Unsupported Claims
-
-Output
-
-Validated Response
+**Output** — Knowledge Subgraph
 
 ---
 
-# Final Output
+## Step 6 — GraphRAG
 
-The AI Engine returns:
+Retrieves only the most relevant graph context — not everything reachable, only what earns its
+place in the prompt.
+
+**Output** — Relevant Context
+
+---
+
+## Step 7 — Context Builder
+
+Merges the parsed rule, the extracted entities, the mapped entities, the knowledge documents, the
+graph context, and the user's operation into one package.
+
+**Output** — Final Prompt Context
+
+---
+
+## Step 8 — LLM Provider
+
+Executes inference using the configured language model.
+
+**Input** — Prompt Context · **Output** — Raw AI Response
+
+---
+
+## Step 9 — Response Formatter
+
+Converts raw AI output into the project's JSON schema.
+
+**Output** — Structured Response
+
+---
+
+## Step 10 — Validation Engine
+
+Validates the JSON schema, the required fields, the confidence, the internal consistency, and any
+unsupported claims.
+
+**Output** — Validated Response
+
+---
+
+## Final output
+
+The AI engine returns:
 
 - Validated JSON
-- Confidence Score
+- Confidence score
 - Reasoning
-- Suggestions (when applicable)
+- Suggestions, when applicable
